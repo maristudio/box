@@ -350,7 +350,7 @@
               <span class="text-sm font-bold text-emerald-600">수익형 대본 & 마케팅 가이드</span>
               <span id="engineBadge" class="text-[10px] bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold font-mono border border-blue-200"></span>
             </div>
-            <button onclick="copyToClipboard()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-4 py-3 rounded-xl transition shadow-md">📋 전체 내용 한방에 복사</button>
+            <button onclick="copyToClipboard()" class="bg-emerald-50 hover:bg-emerald-600 text-white font-bold text-xs px-4 py-3 rounded-xl transition shadow-md">📋 전체 내용 한방에 복사</button>
           </div>
           <div id="geminiOutputContainer" class="space-y-6 w-full"></div>
         </div>
@@ -402,7 +402,7 @@
       setLocal(key, value) {
         try { window.localStorage.setItem(key, value); } catch (e) { this._localData[key] = value; }
       }
-    }
+    };
 
     // 💡 우리만의 비밀번호
     const MY_PASSWORD = "1234";
@@ -427,7 +427,7 @@
     }
 
     function sanitizeFilename(name) {
-      return name.replace(/[\\/:*?"<>|]/g, '').trim().substring(0, 15);
+      return name.replace(/[\/:*?"<>|]/g, '').trim().substring(0, 15);
     }
 
     function isKorean(text) {
@@ -507,7 +507,80 @@
       
       const settingsBadge = document.getElementById('settingsQuotaBadge');
       if (settingsBadge && remaining !== null && limit !== null) {
-        settingsBadge.innerText = `남은 API 횟수: ${remaining} /    // 📦 5단 분리 파싱 보드 렌더러 (동적 렌더링 지원)
+        settingsBadge.innerText = `남은 API 횟수: ${remaining} / ${limit} 회`;
+        settingsBadge.classList.remove('hidden');
+      }
+    }
+
+    function startWorkflow() {
+      document.getElementById('workflowArea').classList.remove('hidden');
+      document.getElementById('workflowArea').classList.add('fade-in');
+    }
+    
+    function toggleSettings() { document.getElementById('settingsModal').classList.toggle('hidden'); }
+    
+    function saveSettings() {
+      safeStorage.setLocal('myRapidKey', document.getElementById('rapidKey').value.trim());
+      safeStorage.setLocal('myGeminiKey', document.getElementById('geminiKey').value.trim());
+      safeStorage.setLocal('myPartnerLink', document.getElementById('partnerLink').value.trim());
+      alert("마케터 설정이 깔끔하게 저장되었습니다! 💾"); toggleSettings();
+    }
+
+    function updateFileName(input) {
+      const display = document.getElementById('fileNameDisplay');
+      if(input.files && input.files[0]) {
+        display.innerHTML = `<span class='text-green-600 font-bold'>선택됨: ${input.files[0].name}</span>`;
+      } else {
+        display.innerText = "여기를 클릭해서 MP4 영상을 선택하세요";
+      }
+    }
+
+    // 📋 전체 한방에 복사기
+    function copyToClipboard() {
+      const outputText = window.currentFullOutput;
+      if (!outputText) return alert("복사할 내용이 없습니다!");
+      executeCopyProcess(outputText, "📋 전체 대본 및 마케팅 패키지가 복사되었습니다!");
+    }
+
+    // 📋 5단 개별 복사용 전용 실행기
+    function copySingleSection(elementId, sectionName) {
+      const outputText = document.getElementById(elementId).innerText;
+      if (!outputText) return alert("복사할 내용이 없습니다!");
+      executeCopyProcess(outputText, `📋 [${sectionName}] 영역이 복사되었습니다!`);
+    }
+
+    // 보안 검문 우회 하이브리드 복사 장치
+    function executeCopyProcess(text, successMessage) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert(successMessage);
+        }).catch(err => {
+          fallbackCopyToClipboard(text, successMessage);
+        });
+      } else {
+        fallbackCopyToClipboard(text, successMessage);
+      }
+    }
+
+    function fallbackCopyToClipboard(text, successMessage) {
+      const tempTextArea = document.createElement("textarea");
+      tempTextArea.value = text;
+      tempTextArea.style.position = "fixed";
+      tempTextArea.style.left = "-9999px";
+      tempTextArea.style.top = "-9999px";
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) alert(successMessage + " (보안 우회)");
+        else alert("복사 실패");
+      } catch (err) {
+        alert("에러: " + err);
+      }
+      document.body.removeChild(tempTextArea);
+    }
+
+    // 📦 5단 분리 파싱 보드 렌더러 (동적 렌더링 지원)
     function parseAndRenderOutput(text) {
       window.currentFullOutput = text;
       const partnerLink = safeStorage.getLocal('myPartnerLink') || "https://link.inpock.com/마이상점";
@@ -719,7 +792,8 @@
         URL.revokeObjectURL(blobUrl);
         alert(`🎉 [${platformName}]_${safeTitle}.mp4 다운로드 완료!`);
       } catch (error) {
-        alert(`⚠️ 브라우저가 다이렉트 저장을 차단했습니다.\n[새 창]에서 우클릭 -> '동영상 다른 이름으로 저장' 해주세요!`);
+        alert(`⚠️ 브라우저가 다이렉트 저장을 차단했습니다.
+[새 창]에서 우클릭 -> '동영상 다른 이름으로 저장' 해주세요!`);
         window.open(videoUrl, '_blank');
       }
     }
@@ -852,7 +926,7 @@
       throw new Error(`구글 서버와 모델명을 모두 자동 탐색했으나 실패했습니다. (최종 오류: ${lastError})`);
     }
 
-    // 🪄 [3대 대본 가공 + Before & After 카드뉴스 동시 탑재 정밀 프롬프트]
+    // 🪄 [1단계: 동영상 공동 마케팅 요약 및 채널 적합성 분석 프롬프트]
     function getInstructionPrompt() {
       return `너는 지금부터 한국어 숏폼 쇼츠 영상을 분석하는 세계 최고의 카피라이터이자 이커머스 마케팅 디렉터야.
 제시된 동영상의 한국어 자막 또는 자막이 없는 경우 흘러나오는 오디오 음성 및 화면의 연출 상황을 종합적으로 분석해줘.
@@ -881,7 +955,7 @@
     }
 
     async function runGeminiVideoTranslation() {
-      const apiKey = safeStorage.getLocal('myGeminiKey');
+      const apiKey = localStorage.getItem('myGeminiKey');
       if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
        
       const fileInput = document.getElementById('videoUpload');
@@ -962,7 +1036,7 @@
               });
               const transData = await res.json();
               if (transData.candidates && transData.candidates[0].content.parts[0]) {
-                const translatedWord = transData.candidates[0].content.parts[0].text.trim().replace(/["'‘“’\"]/g, "");
+                const translatedWord = transData.candidates[0].content.parts[0].text.trim().replace(/["'‘“’"]/g, "");
                 logStatus(`🎉 [번역 성공] "${keyword}" ➔ "${translatedWord}"`, 'success');
                 finalKeyword = translatedWord;
               }
@@ -987,7 +1061,7 @@
           const rapidApiKey = safeStorage.getLocal('myRapidKey') || "";
           if (!rapidApiKey) throw new Error("⚙️ 설정창에서 샤오홍슈용 RapidAPI 키를 등록해 주세요!");
           
-          const asciiOnlyKey = rapidApiKey.replace(/[^\x00-\x7F]/g, "");
+          const asciiOnlyKey = rapidApiKey.replace(/[^ -]/g, "");
           if (asciiOnlyKey !== rapidApiKey) {
             throw new Error("⚠️ RapidAPI Key에 오류 한글이 섞여 있습니다! 설정창(⚙️)을 확인해 주세요.");
           }
@@ -1094,8 +1168,6 @@
           }
         }
 
-
-
         const finalData = videoList.slice(0, 30);
         document.getElementById('resultCount').innerText = `총 ${finalData.length}개 발견`;
         resultsArea.classList.remove('hidden');
@@ -1119,10 +1191,8 @@
               titleRaw: item.title || "수동영상"
             };
           } else {
-            // 💡 [초강력 하이브리드 파서]: note 객체가 존재하면 note를 쓰고, 없으면 item 자체를 note로 취급
             const noteObj = item.note || item || {};
 
-            // 1. Cover URL 파싱 (다양한 nested 경로 지원)
             const coverUrl = resolveField(noteObj, [
               ['cover', 'url_size_large'],
               ['cover', 'url'],
@@ -1136,7 +1206,6 @@
               ['image']
             ], "https://images.unsplash.com/photo-1542291026-7eec264c27ff");
 
-            // 2. Play URL 파싱
             const playUrl = resolveField(noteObj, [
               ['video_info_v2', 'media', 'stream', 'h264', 0, 'master_url'],
               ['video_info_v2', 'media', 'stream', 'h264', 0, 'masterUrl'],
@@ -1146,7 +1215,6 @@
               ['master_url']
             ], "");
 
-            // 3. Likes 파싱
             const likesVal = resolveField(noteObj, [
               ['liked_count'],
               ['likedCount'],
@@ -1156,7 +1224,6 @@
             ], 0);
             const likesCount = likesVal >= 10000 ? (likesVal / 10000).toFixed(1) + "만" : likesVal;
 
-            // 4. Comments 파싱
             const commentsVal = resolveField(noteObj, [
               ['comments_count'],
               ['commentsCount'],
@@ -1165,7 +1232,6 @@
               ['interactInfo', 'commentsCount']
             ], 0);
 
-            // 5. Author Name 파싱
             const authorName = resolveField(noteObj, [
               ['user', 'nickname'],
               ['user', 'name'],
@@ -1174,7 +1240,6 @@
               ['author_name']
             ], "xhs_creator");
 
-            // 6. Author Avatar 파싱
             const authorAvatar = resolveField(noteObj, [
               ['user', 'avatar'],
               ['user', 'images'],
@@ -1183,7 +1248,6 @@
               ['avatar']
             ], "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde");
 
-            // 7. Title 파싱
             const titleText = resolveField(noteObj, [
               ['title'],
               ['desc']
@@ -1250,7 +1314,7 @@
       }
     }
 
-    // 🪄 트렌드 리스트에서 AI 즉시분석을 실행하는 함수 (버그 해결 완료)
+    // 🪄 트렌드 리스트에서 AI 즉시분석을 실행하는 함수 (Stage 1 프로토콜 및 자동 탭 전환)
     async function analyzeDirectTrendingVideo(videoUrl, encodedTitle) {
       const apiKey = safeStorage.getLocal('myGeminiKey');
       if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
@@ -1405,7 +1469,6 @@
       reader.readAsDataURL(file);
     }
 
-    
     // 🔒 [신설] 중국 소싱 다이렉트 검색용 헬퍼 함수
     function searchTaobaoDirect(keyword) {
       if(!keyword || keyword === "추출 중..." || keyword === "대기 중" || keyword === "식별 불가") return alert("소싱 키워드가 준비되지 않았습니다!");
@@ -1664,6 +1727,6 @@ ${finalFormat}`;
         btn.classList.remove('opacity-80', 'cursor-not-allowed');
       }
     }
-</script>
+  </script>
 </body>
 </html>
