@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Global Shorts Studio</title>
+  <style>
+    :root {
+      --bg-color: #f5f5f7;
+      --card-bg: #ffffff;
+      --text-color: #1d1d1f;
+      --text-secondary: #86868b;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --accent: #0071e3;
+      --accent-hover: #0077ed;
+      --border-color: #e5e5e7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background-color: var(--bg-color); color: var(--text-color); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; width: 100%; min-height: 100vh; padding: 16px; }
+    button { cursor: pointer; transition: all 0.2s ease; border: none; font-weight: 600; font-size: 13px; }
+    input, select, textarea { outline: none; border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 12px; font-size: 13px; width: 100%; }
+    input:focus, select:focus { border-color: var(--text-color); }
+    
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    header h1 { font-size: 18px; font-weight: 800; tracking: -0.5px; }
+    header span { font-size: 10px; background: #000; color: #fff; padding: 2px 8px; border-radius: 20px; font-weight: 700; }
+    .gear-btn { background: #fff; border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 14px; }
+    .gear-btn:hover { background: var(--bg-color); }
+
+    .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 14px; }
+    .tab-btn { flex: 1; padding: 10px 0; background: none; color: var(--text-secondary); text-align: center; border-bottom: 2px solid transparent; }
+    .tab-btn.active { color: var(--text-color); border-bottom-color: var(--text-color); font-weight: 700; }
+
+    .container { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 14px; margin-bottom: 12px; }
+    .hidden { display: none !important; }
+    .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .row-input { display: flex; gap: 8px; margin-bottom: 12px; }
+    .row-input input { flex: 1; }
+    .row-input button { background: #000; color: #fff; padding: 10px 16px; border-radius: 10px; }
+
+    .step-card { background: #fafdff; border: 1px solid #e1f3ff; border-radius: 12px; padding: 12px; margin-top: 10px; }
+    .step-card.green { background: #fafffc; border-color: #e1ffe9; }
+    .step-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .step-badge { width: 16px; height: 16px; background: #0071e3; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
+    .step-badge.green { background: var(--primary); }
+    .step-card p { font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
+    
+    .file-drop-area { display: block; border: 2px dashed #cbd5e1; border-radius: 10px; text-align: center; padding: 16px; background: #fff; cursor: pointer; transition: 0.2s; }
+    .btn-action { display: block; width: 100%; padding: 10px; text-align: center; border-radius: 10px; font-weight: bold; }
+    .btn-blue { background: var(--accent); color: #fff; }
+    .btn-green { background: var(--primary); color: #fff; }
+
+    .search-row { display: flex; gap: 6px; margin-bottom: 6px; }
+    .search-row input { flex: 1; }
+    .search-row button { background: var(--primary); color: #fff; padding: 8px 14px; border-radius: 10px; }
+    
+    .filter-row { display: flex; gap: 6px; margin-bottom: 10px; }
+    .filter-row select { flex: 1; padding: 6px 10px; font-size: 11px; border-radius: 8px; font-weight: 700; background: #fff; }
+
+    .quick-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .tag-btn { background: #f3f4f6; color: #4b5563; font-size: 11px; padding: 6px 10px; border-radius: 20px; font-weight: 700; border: 1px solid var(--border-color); }
+
+    .results-area h4 { font-size: 12px; font-weight: bold; color: var(--text-secondary); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .results-grid { display: flex; flex-direction: column; gap: 10px; max-height: 450px; overflow-y: auto; padding-right: 4px; }
+    
+    .video-card { background: #fafafa; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .video-link-wrap { display: flex; gap: 12px; text-decoration: none; color: inherit; cursor: pointer; }
+    
+    .video-thumb { position: relative; width: 90px; height: 126px; background: #000; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+    .video-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
+    .video-thumb span { position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.6); color: #fff; font-size: 10px; padding: 2px 4px; border-radius: 4px; font-weight: bold; }
+    
+    .video-details { flex: 1; min-w: 0; display: flex; flex-direction: column; justify-content: space-between; }
+    .author-line { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: #555; margin-bottom: 4px; }
+    /* 🔎 제목 글자 14px + 굵게 뻥튀기! */
+    .video-title { font-size: 14px; font-weight: 800; line-clamp: 3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; color: #111; }
+    /* 🔎 수치 배지 11.5px 뻥튀기! */
+    .stats-line { display: flex; gap: 10px; font-size: 11.5px; color: var(--text-secondary); font-weight: 700; margin-top: 6px; }
+    
+    .card-actions { display: flex; gap: 6px; border-top: 1px dashed var(--border-color); pt: 8px; margin-top: 2px; }
+    .card-actions button { flex: 1; padding: 8px; border-radius: 8px; font-size: 11px; }
+    .btn-sub-blue { background: #f0f7ff; color: var(--accent); border: 1px solid #cfe6ff; }
+    .btn-sub-green { background: #f0fff4; color: var(--primary); border: 1px solid #cfffdf; }
+
+    .terminal-box { background: #18181b; color: #e4e4e7; border-radius: 12px; padding: 12px; font-family: monospace; font-size: 10px; max-height: 110px; overflow-y: auto; margin-top: 8px; border: 1px solid #27272a; }
+    .terminal-header { display: flex; justify-content: space-between; font-weight: bold; border-b: 1px solid #27272a; padding-bottom: 4px; margin-bottom: 6px; }
+    .terminal-logs { display: flex; flex-direction: column; gap: 2px; }
+    .log-success { color: #34d399; font-weight: bold; }
+    .log-error { color: #f87171; }
+    
+    .result-card { background: #ffffff; border: 1px solid #10b981; border-radius: 12px; padding: 12px; margin-top: 10px; }
+    .result-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: bold; color: var(--primary); margin-bottom: 6px; }
+    /* 🔎 최종 결과창 글자 14px 뻥튀기 및 줄간격 확장! */
+    .output-text { font-size: 14px; white-space: pre-wrap; line-height: 1.6; color: #1f2937; font-weight: 500; }
+
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; backdrop-filter: blur(2px); }
+    .modal-content { background: #fff; border-radius: 16px; padding: 20px; width: 100%; max-width: 380px; }
+    .modal-content h2 { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
+    .modal-fields { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .modal-fields label { font-size: 11px; font-weight: 700; color: #555; }
+    .modal-actions { display: flex; gap: 8px; }
+    .modal-actions button { flex: 1; padding: 10px; border-radius: 10px; }
+    .btn-cancel { background: #f3f4f6; color: #555; }
+    .btn-save { background: #000; color: #fff; }
+    .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 4px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .guide-banner { background: #f3f4f6; color: #374151; font-size: 11px; padding: 8px; border-radius: 8px; font-weight: 700; text-align: center; margin-bottom: 10px; border: 1px solid var(--border-color); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Global Shorts 🚀</h1>
+    <div style="display:flex; gap:6px; align-items:center;">
+      <span>Side Vibe v2</span>
+      <button id="gearBtn" class="gear-btn">⚙️ Settings</button>
+    </div>
+  </header>
+
+  <div class="guide-banner">📏 왼쪽 경계선을 잡고 왼쪽으로 끌면 창이 확 넓어집니다!</div>
+
+  <div class="tabs">
+    <button id="tab1Btn" class="tab-btn active">🔗 수동 분석</button>
+    <button id="tab2Btn" class="tab-btn">🔥 트렌드 발굴</button>
+  </div>
+
+  <div class="container">
+    <div id="tab1Content" class="fade-in">
+      <div class="row-input">
+        <input type="text" id="videoLink" placeholder="틱톡 또는 샤오홍슈 주소 붙여넣기">
+        <button id="loadVideoBtn">가져오기</button>
+      </div>
+      <div id="workflowArea" class="hidden">
+        <div class="step-card">
+          <h3><span class="step-badge">1</span> 스마트 영상 다운로드</h3>
+          <button id="downloadBtn" class="btn-action btn-blue mt-2">⬇️ 원본 MP4 저장하기</button>
+        </div>
+        <div class="step-card green" style="margin-top: 10px;">
+          <h3><span class="step-badge green">2</span> 초고속 한국어 대본 정제</h3>
+          <label for="videoUpload" class="file-drop-area mt-2 mb-2">
+            <span>📁</span><p id="fileNameDisplay">영상을 선택하세요</p>
+            <input type="file" id="videoUpload" accept="video/mp4,video/webm" style="display:none;">
+          </label>
+          <button id="translateBtn" class="btn-action btn-green">🪄 AI 한국어 대본 추출</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab2Content" class="hidden fade-in">
+      <div class="search-row">
+        <!-- ⌨️ 아이디 지정! (JS에서 엔터키 감지함) -->
+        <input type="text" id="trendKeyword" placeholder="검색어 입력 후 엔터 ⌨️">
+        <button id="searchTrendBtn">발굴</button>
+      </div>
+
+      <div class="filter-row">
+        <select id="trendTimeFilter">
+          <option value="all">전체 🗓️</option>
+          <option value="today">오늘 ⏱️</option>
+          <option value="week" selected>이번 주 🔥</option>
+          <option value="month">이번 달 📦</option>
+        </select>
+        <select id="trendSortFilter">
+          <option value="likes" selected>좋아요 순 ❤️</option>
+          <option value="views">조회수 순 👀</option>
+          <option value="comments">댓글 순 💬</option>
+        </select>
+      </div>
+
+      <div class="quick-tags">
+        <button class="tag-btn" data-tag="쿠팡꿀템">📦 쿠팡꿀템</button>
+        <button class="tag-btn" data-tag="삶의질상승">🏠 삶의질상승</button>
+        <button class="tag-btn" data-tag="다이소추천">🛒 다이소추천</button>
+        <button class="tag-btn" data-tag="주방꿀템">🍳 주방꿀템</button>
+      </div>
+
+      <div id="trendResultsArea" class="hidden results-area">
+        <h4>
+          <div style="display:flex; align-items:center; gap:4px;">
+            <span>실시간 대박 쇼츠 🏆</span>
+            <button id="refreshTrendBtn" style="background:#f3f4f6; padding:3px 6px; border-radius:4px; font-size:10px; font-weight:700;">🔄</button>
+            <button id="clearTrendBtn" style="background:#fef2f2; color:#ef4444; padding:3px 6px; border-radius:4px; font-size:10px; font-weight:700;">🧹</button>
+          </div>
+          <span id="resultCount" style="color:var(--primary);">0개</span>
+        </h4>
+        <div id="trendResultsGrid" class="results-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="engineStatusBox" class="terminal-box hidden">
+    <div class="terminal-header"><span>🖥️ API 모니터</span></div>
+    <div id="statusLogs" class="terminal-logs"></div>
+  </div>
+
+  <div id="resultBox" class="result-card hidden">
+    <div class="result-header">
+      <span>번역 및 마케팅 대본</span>
+      <button id="copyBtn" style="background:var(--primary); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px;">📋 복사</button>
+    </div>
+    <pre id="geminiOutput" class="output-text"></pre>
+  </div>
+
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>⚙️ 설정</h2>
+      <div class="modal-fields">
+        <div><label>1. Gemini API Key</label><input type="password" id="geminiKey"></div>
+        <div><label>2. 인포크링크 주소</label><input type="text" id="partnerLink"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="cancelSettingsBtn" class="btn-cancel">닫기</button>
+        <button id="saveSettingsBtn" class="btn-save">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Global Shorts Studio 2.0",
+  "version": "2.0.0",
+  "description": "틱톡 트렌드 발굴 및 무제한 쇼핑 쇼츠 전용 대본 추출기",
+  "permissions": [
+    "sidePanel",
+    "activeTab",
+    "storage",
+    "scripting",
+    "downloads"
+  ],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/*",
+    "https://www.tikwm.com/*",
+    "https://*.xiaohongshu.com/*",
+    "https://*.xhslink.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "file://*/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://*.vercel.app/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "action": {
+    "default_title": "Global Shorts Studio"
+  }
+}
