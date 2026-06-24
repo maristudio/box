@@ -386,6 +386,24 @@
   </div>
 
   <script>
+    // 🔒 [보안] 로컬 파일 실행 시 sessionStorage/localStorage 보안 에러 방지용 래퍼
+    const safeStorage = {
+      _sessionData: {},
+      _localData: {},
+      getSession(key) {
+        try { return safeStorage.getSession(key); } catch (e) { return this._sessionData[key] || null; }
+      },
+      setSession(key, value) {
+        try { safeStorage.setSession(key, value); } catch (e) { this._sessionData[key] = value; }
+      },
+      getLocal(key) {
+        try { return safeStorage.getLocal(key); } catch (e) { return this._localData[key] || null; }
+      },
+      setLocal(key, value) {
+        try { safeStorage.setLocal(key, value); } catch (e) { this._localData[key] = value; }
+      }
+    };
+
     // 💡 우리만의 비밀번호
     const MY_PASSWORD = "1234";
     window.currentFullOutput = "";
@@ -419,14 +437,14 @@
 
     window.onload = function() {
       checkPassword();
-      if(localStorage.getItem('myRapidKey')) document.getElementById('rapidKey').value = localStorage.getItem('myRapidKey');
-      if(localStorage.getItem('myGeminiKey')) document.getElementById('geminiKey').value = localStorage.getItem('myGeminiKey');
-      if(localStorage.getItem('myPartnerLink')) document.getElementById('partnerLink').value = localStorage.getItem('myPartnerLink');
+      if(safeStorage.getLocal('myRapidKey')) document.getElementById('rapidKey').value = safeStorage.getLocal('myRapidKey');
+      if(safeStorage.getLocal('myGeminiKey')) document.getElementById('geminiKey').value = safeStorage.getLocal('myGeminiKey');
+      if(safeStorage.getLocal('myPartnerLink')) document.getElementById('partnerLink').value = safeStorage.getLocal('myPartnerLink');
     };
 
     function checkPassword() {
       // 💡 보안 세션 검증으로 변경 (탭 닫으면 초기화)
-      const savedPass = sessionStorage.getItem('sitePassword');
+      const savedPass = safeStorage.getSession('sitePassword');
       const modal = document.getElementById('doorlockModal');
       const workspace = document.getElementById('mainWorkspace');
       if (savedPass === MY_PASSWORD) {
@@ -442,7 +460,7 @@
     function submitPassword() {
       const inputPass = document.getElementById('sitePassInput').value.trim();
       if (inputPass === MY_PASSWORD) {
-        sessionStorage.setItem('sitePassword', MY_PASSWORD);
+        safeStorage.setSession('sitePassword', MY_PASSWORD);
         checkPassword();
       } else {
         alert("🔒 비밀번호가 올바르지 않습니다!");
@@ -492,7 +510,7 @@
         settingsBadge.innerText = `남은 API 횟수: ${remaining} /    // 📦 5단 분리 파싱 보드 렌더러 (동적 렌더링 지원)
     function parseAndRenderOutput(text) {
       window.currentFullOutput = text;
-      const partnerLink = localStorage.getItem('myPartnerLink') || "https://link.inpock.com/마이상점";
+      const partnerLink = safeStorage.getLocal('myPartnerLink') || "https://link.inpock.com/마이상점";
       const container = document.getElementById('geminiOutputContainer');
       container.innerHTML = "";
 
@@ -723,7 +741,7 @@
             await forceDownloadWithFallback(result.data.play, "틱톡", result.data.title || "개별다운로드");
           } else { throw new Error("영상을 찾을 수 없습니다."); }
         } else {
-          const apiKey = localStorage.getItem('myRapidKey');
+          const apiKey = safeStorage.getLocal('myRapidKey');
           if(!apiKey) throw new Error("⚙️ RapidAPI 키 누락");
           let noteId = linkInput.match(/[0-9a-fA-F]{24}/) ? linkInput.match(/[0-9a-fA-F]{24}/)[0] : linkInput;
           const url = `https://xiao-hong-shu-ni-de-sheng-huo-zhi-nan-xiaohongshu-data-crawler.p.rapidapi.com/api/moreapi/xhs/note_detail`;
@@ -863,7 +881,7 @@
     }
 
     async function runGeminiVideoTranslation() {
-      const apiKey = localStorage.getItem('myGeminiKey');
+      const apiKey = safeStorage.getLocal('myGeminiKey');
       if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
        
       const fileInput = document.getElementById('videoUpload');
@@ -927,7 +945,7 @@
 
       try {
         let finalKeyword = keyword;
-        const geminiApiKey = localStorage.getItem('myGeminiKey');
+        const geminiApiKey = safeStorage.getLocal('myGeminiKey');
 
         // 💡 1. 번역 매직: 샤오홍슈이고 한국어 키워드가 들어왔을 때 자동 중국어 번역 실행!
         if (platform === "xhs" && isKorean(keyword)) {
@@ -966,7 +984,7 @@
           else if (result.data && Array.isArray(result.data.videos)) videoList = result.data.videos;
         } else {
           // 샤오홍슈 수량 20개 NOTES 검색
-          const rapidApiKey = localStorage.getItem('myRapidKey') || "";
+          const rapidApiKey = safeStorage.getLocal('myRapidKey') || "";
           if (!rapidApiKey) throw new Error("⚙️ 설정창에서 샤오홍슈용 RapidAPI 키를 등록해 주세요!");
           
           const asciiOnlyKey = rapidApiKey.replace(/[^\x00-\x7F]/g, "");
@@ -1234,7 +1252,7 @@
 
     // 🪄 트렌드 리스트에서 AI 즉시분석을 실행하는 함수 (버그 해결 완료)
     async function analyzeDirectTrendingVideo(videoUrl, encodedTitle) {
-      const apiKey = localStorage.getItem('myGeminiKey');
+      const apiKey = safeStorage.getLocal('myGeminiKey');
       if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
 
       const title = decodeURIComponent(encodedTitle);
@@ -1293,7 +1311,7 @@
     }
 
     async function runGeminiImageAnalysis() {
-      const apiKey = localStorage.getItem('myGeminiKey');
+      const apiKey = safeStorage.getLocal('myGeminiKey');
       if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
 
       const fileInput = document.getElementById('productImageUpload');
@@ -1583,7 +1601,7 @@ CTA: 프로필 링크 클릭해서 빠르게 확인하세요! (말투에 맞춰 
 `;
       }
 
-      const partnerLink = localStorage.getItem('myPartnerLink') || "https://link.inpock.com/마이상점";
+      const partnerLink = safeStorage.getLocal('myPartnerLink') || "https://link.inpock.com/마이상점";
       let finalFormat = formatGuideline.replace("{partnerLink}", partnerLink);
 
       return `너는 제공된 상품 요약을 바탕으로 인스타그램과 틱톡 쇼츠에 최적화된 마케팅 텍스트 콘텐츠를 고속 제작하는 카피라이터야.
@@ -1601,7 +1619,7 @@ ${finalFormat}`;
     }
 
     async function runStage2ContentGeneration() {
-      const apiKey = localStorage.getItem('myGeminiKey');
+      const apiKey = safeStorage.getLocal('myGeminiKey');
       if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
 
       const commonAnalysis = document.getElementById('commonAnalysisOutput').value.trim();
