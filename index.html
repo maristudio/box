@@ -787,6 +787,8 @@
   }
 
   async function forceDownloadWithFallback(videoUrl, platformName, rawTitle = "") {
+   const safeTitle = rawTitle ? sanitizeFilename(decodeURIComponent(rawTitle)) : Date.now();
+   const filename = `[${platformName}]_${safeTitle}.mp4`;
    try {
     const response = await fetch(videoUrl);
     if (!response.ok) throw new Error("CORS 방어");
@@ -794,17 +796,21 @@
     const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = blobUrl;
-    const safeTitle = rawTitle ? sanitizeFilename(decodeURIComponent(rawTitle)) : Date.now();
-    a.download = `[${platformName}]_${safeTitle}.mp4`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(blobUrl);
-    alert(`🎉 [${platformName}]_${safeTitle}.mp4 다운로드 완료!`);
+    alert(`🎉 ${filename} 다운로드 완료!`);
    } catch (error) {
-    alert(`⚠️ 브라우저가 다이렉트 저장을 차단했습니다.
-[새 창]에서 우클릭 -> '동영상 다른 이름으로 저장' 해주세요!`);
-    window.open(videoUrl, '_blank');
+    const proxyUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&filename=${encodeURIComponent(filename)}`;
+    const a = document.createElement('a');
+    a.href = proxyUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    alert("⚠️ 브라우저 직접 저장이 막혀 서버 다운로드 방식으로 다시 시도했습니다. 다운로드 목록을 확인해 주세요.");
    }
   }
 
