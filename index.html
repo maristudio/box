@@ -1126,36 +1126,48 @@
      if (Array.isArray(result.data)) videoList = result.data;
      else if (result.data && Array.isArray(result.data.videos)) videoList = result.data.videos;
     } else {
-     // 샤오홍슈 수량 20개 NOTES 검색
-     const rapidApiKey = safeStorage.getLocal('myRapidKey') || "";
-     if (!rapidApiKey) throw new Error("⚙️ 설정창에서 샤오홍슈용 RapidAPI 키를 등록해 주세요!");
-      
-     const asciiOnlyKey = rapidApiKey.replace(/[^ -]/g, "");
-     if (asciiOnlyKey !== rapidApiKey) {
-      throw new Error("⚠️ RapidAPI Key에 오류 한글이 섞여 있습니다! 설정창(⚙️)을 확인해 주세요.");
-     }
-      
-     logStatus(`📥 [샤오홍슈 수집] "${finalKeyword}" 키워드로 수집 가동 중...`);
-     // 🚨 [수정 적용] Xiaohongshu All API 검색 v2 사용
-     const res = await fetch(`https://xiaohongshu-all-api.p.rapidapi.com/api/xiaohongshu/search-note/v2?keyword=${encodeURIComponent(finalKeyword)}&page=1&pageSize=20`, {
-      method: 'GET',
-      headers: {
-       'Content-Type': 'application/json',
-       'x-rapidapi-host': 'xiaohongshu-all-api.p.rapidapi.com',
-       'x-rapidapi-key': asciiOnlyKey
+     logStatus(`📥 [샤오홍슈 무료 수집] 확장 프로그램으로 "${finalKeyword}" 키워드 수집 시도 중...`);
+     let result = null;
+
+     try {
+      const extensionResult = await requestExtensionAction("FETCH_XHS", { keyword: finalKeyword }, 12000);
+      if (extensionResult && extensionResult.success && Array.isArray(extensionResult.data)) {
+       result = { data: extensionResult.data };
+       logStatus(`🎉 [샤오홍슈 무료 수집 성공] 확장 프로그램으로 ${extensionResult.data.length}개 후보를 가져왔습니다.`, 'success');
+      } else {
+       throw new Error(extensionResult?.error || "확장 프로그램 수집 결과 없음");
       }
-     });
-      
-     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`RapidAPI 서버 통신 거절 (${res.status}): ${errorText}`);
-     }
-      
-     const result = await res.json();
-     const remaining = res.headers.get('x-ratelimit-requests-remaining');
-     const limit = res.headers.get('x-ratelimit-requests-limit');
-     if (remaining !== null && limit !== null) {
-      updateQuotaUI(remaining, limit);
+     } catch (extensionError) {
+      logStatus(`⚠️ [무료 수집 실패] ${extensionError.message}. RapidAPI 백업으로 전환합니다.`, 'try');
+
+      const rapidApiKey = safeStorage.getLocal('myRapidKey') || "";
+      if (!rapidApiKey) throw new Error("⚙️ 무료 확장 수집이 실패했습니다. 백업용 RapidAPI 키를 설정하거나 샤오홍슈 로그인/캡차를 먼저 확인해 주세요!");
+       
+      const asciiOnlyKey = rapidApiKey.replace(/[^ -]/g, "");
+      if (asciiOnlyKey !== rapidApiKey) {
+       throw new Error("⚠️ RapidAPI Key에 오류 한글이 섞여 있습니다! 설정창(⚙️)을 확인해 주세요.");
+      }
+       
+      const res = await fetch(`https://xiaohongshu-all-api.p.rapidapi.com/api/xiaohongshu/search-note/v2?keyword=${encodeURIComponent(finalKeyword)}&page=1&pageSize=20`, {
+       method: 'GET',
+       headers: {
+        'Content-Type': 'application/json',
+        'x-rapidapi-host': 'xiaohongshu-all-api.p.rapidapi.com',
+        'x-rapidapi-key': asciiOnlyKey
+       }
+      });
+       
+      if (!res.ok) {
+       const errorText = await res.text();
+       throw new Error(`RapidAPI 서버 통신 거절 (${res.status}): ${errorText}`);
+      }
+       
+      result = await res.json();
+      const remaining = res.headers.get('x-ratelimit-requests-remaining');
+      const limit = res.headers.get('x-ratelimit-requests-limit');
+      if (remaining !== null && limit !== null) {
+       updateQuotaUI(remaining, limit);
+      }
      }
       
      // 💡 [초정밀 자동 목록 탐지 장치] notes, items, list 혹은 data 자체 배열을 추적
