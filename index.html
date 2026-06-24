@@ -391,18 +391,18 @@
       _sessionData: {},
       _localData: {},
       getSession(key) {
-        try { return safeStorage.getSession(key); } catch (e) { return this._sessionData[key] || null; }
+        try { return window.sessionStorage.getItem(key); } catch (e) { return this._sessionData[key] || null; }
       },
       setSession(key, value) {
-        try { safeStorage.setSession(key, value); } catch (e) { this._sessionData[key] = value; }
+        try { window.sessionStorage.setItem(key, value); } catch (e) { this._sessionData[key] = value; }
       },
       getLocal(key) {
-        try { return safeStorage.getLocal(key); } catch (e) { return this._localData[key] || null; }
+        try { return window.localStorage.getItem(key); } catch (e) { return this._localData[key] || null; }
       },
       setLocal(key, value) {
-        try { safeStorage.setLocal(key, value); } catch (e) { this._localData[key] = value; }
+        try { window.localStorage.setItem(key, value); } catch (e) { this._localData[key] = value; }
       }
-    };
+    }
 
     // 💡 우리만의 비밀번호
     const MY_PASSWORD = "1234";
