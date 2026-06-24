@@ -13,17 +13,14 @@
     .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; width: 20px; height: 20px; animation: spin 1s ease-in-out infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
      
-    /* 파일 업로드 디자인 */
     .file-drop-area { border: 2px dashed #cbd5e1; transition: all 0.3s ease; cursor: pointer; }
     .file-drop-area:hover { border-color: #10b981; background-color: #f0fdf4; }
-
-    /* 🔒 화면 잠금 블러 처리 효과 */
     .blur-active { filter: blur(12px); pointer-events: none; user-select: none; }
   </style>
 </head>
 <body class="text-gray-900 min-h-screen flex flex-col items-center py-16 px-4 relative">
 
-  <!-- 🔒 전체 화면 비밀번호 도어락 모달 -->
+  <!-- 🔒 전체 화면 비밀번호 도어락 모달 (기본 비번: 1234) -->
   <div id="doorlockModal" class="fixed inset-0 modal-bg bg-black/60 z-[999] flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm text-center border border-gray-100 fade-in">
       <span class="text-4xl mb-4 inline-block">🔒</span>
@@ -31,16 +28,15 @@
       <p class="text-gray-500 text-xs mb-6">마케터 전용 프라이빗 스튜디오입니다.<br>접속 비밀번호를 입력해 주세요.</p>
       
       <div class="row-input flex gap-2 mb-4">
-        <input type="password" id="sitePassInput" onkeydown="if(event.key === 'Enter') submitPassword()" placeholder="비밀번호를 입력하세요" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black text-center text-sm font-bold tracking-widest">
+        <input type="password" id="sitePassInput" onkeydown="if(event.key === 'Enter') submitPassword()" placeholder="비밀번호를 입력하세요" class="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black text-center text-sm font-bold tracking-widest">
       </div>
       <button onclick="submitPassword()" class="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition shadow-md text-sm">스튜디오 입장하기 🔓</button>
     </div>
   </div>
 
-  <!-- 🖥 Main Workspace -->
+  <!-- 🖥️ 메인 바디 영역 -->
   <div id="mainWorkspace" class="w-full max-w-7xl blur-active flex flex-col items-center">
 
-    <!-- 세팅 버튼 -->
     <button onclick="toggleSettings()" class="absolute top-6 right-6 p-3 bg-white rounded-full shadow-sm border border-gray-200 hover:bg-gray-50 transition text-xl z-10">⚙️</button>
 
     <header class="text-center mb-6 w-full max-w-2xl">
@@ -49,9 +45,8 @@
       <p class="text-gray-500">대박 쇼케팅 발굴부터 수익화 대본 추출까지 무제한 원스톱 패키지!</p>
     </header>
 
-    <!-- 📏 가로 조절 가이드 안내 띠 -->
     <div class="w-full max-w-7xl bg-gray-100 border border-gray-200 text-gray-700 text-xs font-bold py-2.5 rounded-xl text-center mb-6 shadow-sm">
-      📏 꿀팁: 크롬 사이드 패널에서 사용 시, 왼쪽 경계선을 잡고 왼쪽으로 쭉 당기면 4열 와이드 화면으로 넓게 쓰실 수 있습니다!
+      📏 꿀팁: 크롬 사이드 패널에서 사용 시,  왼쪽 경계선을 잡고 왼쪽으로 쭉 당기면 4열 와이드 화면으로 넓게 쓰실 수 있습니다!
     </div>
 
     <main class="w-full bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden relative">
@@ -62,7 +57,7 @@
         <button id="tab2Btn" onclick="switchTab(2)" class="flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition">🔥 실시간 트렌드 발굴기</button>
       </div>
 
-      <!-- 탭 1: 개별 링크 수동 분석 -->
+      <!-- 탭 1 -->
       <div id="tab1Content" class="p-8 space-y-6">
         <div class="flex gap-4">
           <input type="text" id="videoLink" placeholder="틱톡 또는 샤오홍슈의 주소를 붙여넣으세요" class="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black transition text-sm">
@@ -70,7 +65,6 @@
         </div>
 
         <div id="workflowArea" class="hidden space-y-8">
-          <!-- 1단계 -->
           <div class="flex gap-4 items-start p-5 bg-blue-50 rounded-2xl border border-blue-100">
             <div class="w-8 h-8 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center font-bold flex-shrink-0">1</div>
             <div class="flex-1">
@@ -81,8 +75,6 @@
               </button>
             </div>
           </div>
-
-          <!-- 2단계 -->
           <div class="flex gap-4 items-start p-5 bg-green-50 rounded-2xl border border-green-100">
             <div class="w-8 h-8 rounded-full bg-green-200 text-green-700 flex items-center justify-center font-bold flex-shrink-0">2</div>
             <div class="flex-1">
@@ -101,7 +93,7 @@
         </div>
       </div>
 
-      <!-- 탭 2: 실시간 트렌드 발굴기 -->
+      <!-- 탭 2 -->
       <div id="tab2Content" class="hidden p-8 space-y-6">
         <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-xs text-emerald-800 flex items-start gap-3">
           <span class="text-lg">💡</span>
@@ -112,35 +104,28 @@
         </div>
 
         <div class="flex flex-col md:flex-row gap-3">
-          <!-- 🔌 플랫폼 선택 드롭다운 -->
           <select id="platformSelect" class="px-4 py-3 rounded-xl border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black transition font-bold text-gray-700">
             <option value="tiktok" selected>틱톡 🚀</option>
             <option value="xhs">샤오홍슈 📕</option>
           </select>
-          
-          <!-- ⌨️ 엔터키 수집 바인딩 완료 -->
           <input type="text" id="trendKeyword" onkeydown="if(event.key === 'Enter') discoverTrends()" placeholder="원하는 검색어가 있다면 직접 입력 후 엔터를 치세요!" class="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black transition text-sm">
           
-          <!-- ⏱️ 기간 필터 -->
           <select id="trendTimeFilter" class="px-4 py-3 rounded-xl border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black transition font-bold text-gray-700">
             <option value="all">전체 기간 🗓️</option>
             <option value="today">오늘 (최근 24시간) ⏱️</option>
             <option value="week" selected>이번 주 (최근 7일) 🔥</option>
             <option value="month">이번 달 (최근 30일) 📦</option>
           </select>
-          
-          <!-- 📊 정렬 필터 -->
           <select id="trendSortFilter" class="px-4 py-3 rounded-xl border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black transition font-bold text-gray-700">
             <option value="likes" selected>좋아요 많은 순 ❤️</option>
             <option value="views">조회수 높은 순 👀</option>
             <option value="comments">댓글 많은 순 💬</option>
             <option value="latest">최신 업로드 순 ⏱️</option>
           </select>
-          
           <button onclick="discoverTrends()" id="searchTrendBtn" class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-emerald-700 transition shadow-md whitespace-nowrap">발굴하기 🔍</button>
         </div>
 
-        <!-- 🇰🇷 4대 쇼핑 퀵-태그 버튼 -->
+        <!-- 4대 쇼핑 퀵-태그 버튼 -->
         <div class="flex gap-2 flex-wrap pb-2 border-b border-gray-100">
           <button onclick="triggerQuickTag('쿠팡꿀템')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-3.5 py-2 rounded-full transition border border-gray-200">📦 쿠팡 꿀템</button>
           <button onclick="triggerQuickTag('삶의질상승')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-3.5 py-2 rounded-full transition border border-gray-200">🏠 삶의 질 상승</button>
@@ -148,7 +133,7 @@
           <button onclick="triggerQuickTag('주방꿀템')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-3.5 py-2 rounded-full transition border border-gray-200">🍳 주방/생활 리빙</button>
         </div>
 
-        <!-- 트렌드 결과 창 -->
+        <!-- 결과 창 -->
         <div id="trendResultsArea" class="hidden space-y-4">
           <h4 class="font-bold text-gray-700 text-sm flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -158,16 +143,12 @@
             </div>
             <span id="resultCount" class="text-xs text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded-full"></span>
           </h4>
-          <!-- 💻 4열 대화면 그리드로 파워 업그레이드! -->
-          <div id="trendResultsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-h-[600px] overflow-y-auto pr-2 animate-fade-in">
-            <!-- 비디오 카드가 동적으로 주입됩니다 -->
-          </div>
+          <div id="trendResultsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-h-[600px] overflow-y-auto pr-2"></div>
         </div>
       </div>
 
-      <!-- 공통 로그 및 결과 박스 -->
+      <!-- 결과 및 터미널 -->
       <div class="p-8 border-t border-gray-100 bg-gray-50 space-y-4 w-full">
-        <!-- 🖥️ 실시간 API 연결 모니터 창 -->
         <div id="engineStatusBox" class="hidden p-4 bg-gray-900 text-gray-200 rounded-xl font-mono text-xs space-y-2 border border-gray-800 shadow-inner">
           <div class="flex items-center justify-between border-b border-gray-800 pb-2 mb-1 text-gray-400 font-bold">
             <span>🖥️ 실시간 API 연결 모니터</span>
@@ -176,17 +157,19 @@
           <div id="statusLogs" class="space-y-1"></div>
         </div>
 
-        <!-- 번역 결과창 -->
-        <div id="resultBox" class="hidden p-5 bg-white border border-emerald-200 rounded-2xl shadow-sm">
-          <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-3">
+        <!-- 5단 분리 복사기 적용 결과창 (수정 완료!) -->
+        <div id="resultBox" class="hidden p-6 bg-white border border-emerald-200 rounded-3xl shadow-lg space-y-6 animate-fade-in">
+          <div class="flex items-center justify-between border-b border-gray-100 pb-4">
             <div class="flex items-center gap-2">
-              <span class="text-sm font-bold text-emerald-600">수익형 대본 & 마케팅 가이드</span>
+              <span class="text-base font-bold text-emerald-600">수익형 대본 & 마케팅 가이드</span>
               <span id="engineBadge" class="text-[10px] bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold font-mono border border-blue-200"></span>
             </div>
-            <button onclick="copyToClipboard()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3 py-2 rounded-lg transition shadow-sm">📋 전체 내용 복사</button>
+            <!-- 전체 복사기 유지 -->
+            <button onclick="copyToClipboard()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-4 py-3 rounded-xl transition shadow-md">📋 전체 내용 한방에 복사</button>
           </div>
-          <!-- 🔎 결과창 글씨크기 text-base로 대폭 뻥튀기 및 줄간격 확장! -->
-          <pre id="geminiOutput" class="text-gray-800 text-base whitespace-pre-wrap leading-relaxed font-sans font-semibold"></pre>
+          
+          <!-- 📦 5단 분리형 카드 컨테이너 -->
+          <div id="geminiOutputContainer" class="space-y-6 w-full"></div>
         </div>
       </div>
     </main>
@@ -219,15 +202,15 @@
   </div>
 
   <script>
-    // 💡 비밀번호 설정 구역 (원하시는대로 4자리 바꾸셔도 무방합니다!)
     const MY_PASSWORD = "1234";
 
-    // 특수문자 제거 및 파일명 조립 함수 (ID 배제, 순수 제목 15글자)
+    // AI 원문 데이터 저장 전용 글로벌 변수 (한방에 복사용)
+    window.currentFullOutput = "";
+
     function sanitizeFilename(name) {
       return name.replace(/[\\/:*?"<>|]/g, '').trim().substring(0, 15);
     }
 
-    // 한국어 판별 정밀 정규식 (중국어 자동 번역기 작동 트리거)
     function isKorean(text) {
       const regExp = /[ㄱ-ㅎㅏ-ㅣ가-힣]/g;
       return regExp.test(text);
@@ -307,14 +290,103 @@
       }
     }
 
+    // 📋 전체 한방에 복사기 (보안 검문 철벽 우회 적용)
     function copyToClipboard() {
-      const outputText = document.getElementById('geminiOutput').innerText;
+      if (!window.currentFullOutput) return alert("복사할 내용이 없습니다!");
+      executeCopyProcess(window.currentFullOutput, "📋 전체 대본 및 마케팅 패키지가 복사되었습니다!");
+    }
+
+    // 📋 5단 개별 복사용 전용 실행기 (자유롭게 복사)
+    function copySingleSection(elementId, sectionName) {
+      const outputText = document.getElementById(elementId).innerText;
       if (!outputText) return alert("복사할 내용이 없습니다!");
-      
-      navigator.clipboard.writeText(outputText).then(() => {
-        alert("📋 대본 3종과 고정댓글 패키지가 복사되었습니다! 캡컷 혹은 인스타에 가볍게 복붙하세요.");
-      }).catch(err => {
-        alert("복사 실패: " + err);
+      executeCopyProcess(outputText, `📋 [${sectionName}] 대본이 복사되었습니다!`);
+    }
+
+    // 보안 검문 우회 하이브리드 복사 장치 (어디서나 100% 작동)
+    function executeCopyProcess(text, successMessage) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert(successMessage);
+        }).catch(err => {
+          fallbackCopyToClipboard(text, successMessage);
+        });
+      } else {
+        fallbackCopyToClipboard(text, successMessage);
+      }
+    }
+
+    function fallbackCopyToClipboard(text, successMessage) {
+      const tempTextArea = document.createElement("textarea");
+      tempTextArea.value = text;
+      tempTextArea.style.position = "fixed";
+      tempTextArea.style.left = "-9999px";
+      tempTextArea.style.top = "-9999px";
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) alert(successMessage + " (CORS 우회)");
+        else alert("복사 실패");
+      } catch (err) {
+        alert("에러: " + err);
+      }
+      document.body.removeChild(tempTextArea);
+    }
+
+    // 📦 5단 분리 파싱 렌더링 장치 (수정 완료!)
+    function parseAndRenderOutput(text) {
+      window.currentFullOutput = text; // 전체 복사용 백업
+
+      const sections = {
+        script1: { title: "🚨 대본 1: 너만 몰랐네형 (비밀 폭로/호기심)", tag: "[태그_대본1]" },
+        script2: { title: "🍳 대본 2: 문제 해결형 (일상 불편/공감)", tag: "[태그_대본2]" },
+        script3: { title: "🛒 대본 3: 솔직 리뷰형 (내돈내산 진정성)", tag: "[태그_대본3]" },
+        cardnews: { title: "📸 인스타/틱톡 Before & After 가상 스테이징 대본 (5장 슬라이드)", tag: "[태그_카드뉴스]" },
+        comment: { title: "💸 쇼핑 유도 고정댓글 & 후킹 타이틀 템플릿", tag: "[태그_댓글]" }
+      };
+
+      const container = document.getElementById('geminiOutputContainer');
+      container.innerHTML = ""; // 기존 비우기
+
+      const tagsInOrder = ["script1", "script2", "script3", "cardnews", "comment"];
+
+      tagsInOrder.forEach((key, index) => {
+        const tag = sections[key].tag;
+        let content = "";
+
+        const tagIndex = text.indexOf(tag);
+        if (tagIndex !== -1) {
+          const start = tagIndex + tag.length;
+          let end = text.length;
+
+          // 다음으로 오는 태그가 있다면 그 앞에서 자름
+          const nextTags = tagsInOrder.slice(index + 1).map(k => sections[k].tag);
+          for (const nextTag of nextTags) {
+            const nextTagIndex = text.indexOf(nextTag);
+            if (nextTagIndex !== -1 && nextTagIndex < end && nextTagIndex > start) {
+              end = nextTagIndex;
+            }
+          }
+          content = text.substring(start, end).trim();
+        }
+
+        if (!content) {
+          content = "데이터 분석에 일부 실패했거나 항목이 누락되었습니다. 위의 [전체 내용 복사] 버튼을 사용해 대본을 수동으로 검토해 주세요.";
+        }
+
+        const cardId = `copy_box_${key}`;
+        const cardHtml = `
+          <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 flex flex-col space-y-3 shadow-sm hover:shadow transition duration-150">
+            <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-1">
+              <span class="text-sm font-extrabold text-gray-800">${sections[key].title}</span>
+              <!-- 개별 복사 버튼 -->
+              <button onclick="copySingleSection('${cardId}', '${sections[key].title}')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-xs px-3.5 py-2 rounded-xl border border-emerald-200 transition">📋 복사</button>
+            </div>
+            <pre id="${cardId}" class="text-gray-800 text-sm whitespace-pre-wrap leading-relaxed font-sans font-semibold bg-white p-4 rounded-xl border border-gray-100 max-h-[300px] overflow-y-auto">${content}</pre>
+          </div>
+        `;
+        container.innerHTML += cardHtml;
       });
     }
 
@@ -323,7 +395,6 @@
       document.getElementById('trendResultsArea').classList.add('hidden');
     }
 
-    // 다운로드 시 [플랫폼] _ 제목_첫15글자.mp4 자동 명명 기법!
     async function forceDownloadWithFallback(videoUrl, platformName, rawTitle = "") {
       try {
         const response = await fetch(videoUrl);
@@ -340,7 +411,7 @@
         a.click();
         a.remove();
         URL.revokeObjectURL(blobUrl);
-        alert(`🎉 대박! [${platformName}]_${safeTitle}.mp4 다운로드 완료!`);
+        alert(`🎉 [${platformName}]_${safeTitle}.mp4 다운로드 완료!`);
       } catch (error) {
         alert(`⚠️ 브라우저가 다이렉트 저장을 차단했습니다.\n[새 창]에서 우클릭 -> '동영상 다른 이름으로 저장' 해주세요!`);
         window.open(videoUrl, '_blank');
@@ -397,7 +468,7 @@
           } else { throw new Error("영상 데이터를 찾을 수 없습니다."); }
         }
       } catch (error) {
-        alert("🚨 에러 발생:\n" + error.message);
+        alert("🚨 에러: " + error.message);
       } finally {
         btn.innerHTML = originalHTML;
         btn.classList.remove('opacity-80', 'cursor-not-allowed');
@@ -472,30 +543,35 @@
       
       return `너는 지금부터 한국어 숏폼 쇼츠 영상을 분석하는 세계 최고의 카피라이터이자 이커머스 마케팅 디렉터야. 
       이 영상에서 흘러나오는 한국어 음성과 화면 자막을 분석한 뒤, 아래 출력 형식 가이드를 한 글자도 빼놓지 말고 그대로 출력해줘.
+      특히 각 대본 구역의 시작점에 반드시 [태그_대본1], [태그_대본2], [태그_대본3], [태그_카드뉴스], [태그_댓글] 이라는 구분 태그를 대괄호[]를 포함해서 정확히 적어줘. 태그 사이에는 줄바꿈을 포함하여 본문 내용만 적어줘.
       (마지막에 캡컷 우회 팁 같은 구구절절한 기술 가이드 멘트는 절대 적지 마.)
       
       [출력 형식 가이드]
       --------------------------------------------------
-      🚨 대본 1: [너만 몰랐네형] (비밀 폭로 및 호기심 유발 컨셉)
+      [태그_대본1]
+      🚨 대본 1: [너만 몰랐네형] (비밀 폭로 및 후킹 유발 컨셉)
       - "아직도 이거 모르는 사람 없죠?" 등으로 오프닝을 열며 결핍을 자극하는 문체.
-      - 캡컷에 복사해 넣기 좋게 3초 단위 리듬감 있는 문장 줄바꿈으로 정제해줘.
+      - 캡컷에 복사해 넣기 좋게 3초 단위 문장 줄바꿈으로 정제해줘.
       
+      [태그_대본2]
       🍳 대본 2: [문제 해결형] (일상의 불편함을 콕 찔러서 공감하는 컨셉)
       - "설거지하거나 청소할 때 OO 때문에 짜증 폭발하셨죠?" 등으로 고질적 불편함을 설명한 뒤 제품으로 해결하는 문체.
-      - 캡컷에 복사해 넣기 좋게 3초 단위 리듬감 있는 문장 줄바꿈으로 정제해줘.
+      - 캡컷에 복사해 넣기 좋게 3초 단위 문장 줄바꿈으로 정제해줘.
       
+      [태그_대본3]
       🛒 대본 3: [솔직 리뷰형] (광고 빼고 내돈내산 100% 진정성 컨셉)
       - 친한 친구가 직접 돈 내고 써보고 조곤조곤 추천하는 정직한 신뢰감 톤앤매너 문체.
-      - 캡컷에 복사해 넣기 좋게 3초 단위 리듬감 있는 문장 줄바꿈으로 정제해줘.
+      - 캡컷에 복사해 넣기 좋게 3초 단위 문장 줄바꿈으로 정제해줘.
 
+      [태그_카드뉴스]
       📸 인스타/틱톡 Before & After 가상 스테이징 대본 (5장 슬라이드용)
-      - 굳이 영상 촬영을 하지 않고도 소품 가상 합성 이미지로 2030의 지갑을 열게 만들 카드뉴스 텍스트 패키지야.
-      - 1페이지 (Before): 우중충하고 낡은 공간을 지적하며 결핍을 자극하는 후킹 문장 (예: "인스타 감성방 꾸미기, 돈 많이 드는 줄 알았는데...")
+      - 1페이지 (Before): 우중충하고 낡은 공간을 지적하며 결핍을 자극하는 후킹 문장 (예: "인스타 감성방 꾸미기, 돈 많이 드는 줄 아셨나요?")
       - 2페이지 (After): 감성 소품 가상 합성으로 럭셔리해진 공간을 보여주는 환상 유도 문장 (예: "단돈 3만 원으로 이케아 감성 방 만들기 성공!")
       - 3페이지 (소품 A 매력): 합성 소품 A의 구체적 이점 설명
       - 4페이지 (소품 B 매력): 합성 소품 B의 구체적 이점 설명
       - 5페이지 (인포크링크 CTA): "이 방에 쓰인 가성비 소품들 정보는 프로필 주소에 싹 다 정리해 둠!" 형태의 시청 지속형 유도 문구
       
+      [태그_댓글]
       🎯 어그로 후킹 타이틀 3종
       1. (자극성 100% 타이틀)
       2. (궁금증 유발 타이틀)
@@ -510,8 +586,7 @@
 
     async function runGeminiVideoTranslation() {
       const apiKey = localStorage.getItem('myGeminiKey');
-      if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 무료 API 키를 먼저 등록해 주세요!");
-       
+      if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
       const fileInput = document.getElementById('videoUpload');
       if(!fileInput.files || fileInput.files.length === 0) return alert("다운로드받은 영상을 먼저 선택해 주세요!");
 
@@ -520,7 +595,6 @@
 
       const btn = document.getElementById('translateBtn');
       const resultBox = document.getElementById('resultBox');
-      const outputTxt = document.getElementById('geminiOutput');
       const engineBadge = document.getElementById('engineBadge');
        
       btn.innerHTML = "<div class='spinner'></div> <span>영상을 분해하여 대본 정제하는 중...</span>";
@@ -538,7 +612,13 @@
 
         try {
           const result = await tryGeminiWithFallback(apiKey, base64Video, file.type, prompt);
-          outputTxt.innerText = result.text;
+          
+          // 💡 복사 버튼용 전체 원본 텍스트 저장
+          window.currentFullOutput = result.text;
+
+          // 💡 5단 분리 파싱 렌더링 호출!
+          parseAndRenderOutput(result.text);
+
           engineBadge.innerText = `엔진: ${result.engine}`;
           engineBadge.classList.remove('hidden');
           resultBox.classList.remove('hidden');
@@ -579,7 +659,7 @@
         let finalKeyword = keyword;
         const geminiApiKey = localStorage.getItem('myGeminiKey');
 
-        // 💡 1. 번역 매직: 샤오홍슈이고 한국어 키워드가 들어왔을 때 자동 중국어 번역 실행!
+        // 💡 1. 번역 매직
         if (platform === "xhs" && isKorean(keyword)) {
           if (!geminiApiKey) {
             logStatus(`⚠️ 제미니 무료 키가 없어 한국어 원문으로 직접 검색을 시도합니다.`, 'try');
@@ -615,15 +695,19 @@
           if (Array.isArray(result.data)) videoList = result.data;
           else if (result.data && Array.isArray(result.data.videos)) videoList = result.data.videos;
         } else {
-          // 샤오홍슈 수동 분석용 RapidAPI 활용
-          const rapidApiKey = localStorage.getItem('myRapidKey');
+          const rapidApiKey = localStorage.getItem('myRapidKey') || "";
           if (!rapidApiKey) throw new Error("⚙️ 설정창에서 샤오홍슈용 RapidAPI 키를 등록해 주세요!");
+          
+          const asciiOnlyKey = rapidApiKey.replace(/[^\x00-\x7F]/g, "");
+          if (asciiOnlyKey !== rapidApiKey) {
+            throw new Error("⚠️ RapidAPI Key에 오류 한글이 섞여 있습니다! 설정창(⚙️)을 확인해 주세요.");
+          }
           
           logStatus(`📥 [샤오홍슈 수집] "${finalKeyword}" 키워드로 20개 노트를 수집하는 중...`);
           const res = await fetch(`https://xiaohongshu-all-api.p.rapidapi.com/api/xiaohongshu/search-note/v2?keyword=${encodeURIComponent(finalKeyword)}&page=1&pageSize=20`, {
             headers: {
               'x-rapidapi-host': 'xiaohongshu-all-api.p.rapidapi.com',
-              'x-rapidapi-key': rapidApiKey
+              'x-rapidapi-key': asciiOnlyKey
             }
           });
           const result = await res.json();
@@ -634,38 +718,49 @@
           throw new Error("영상을 단 한 개도 가져오지 못했습니다. 키워드나 수집 필터를 다듬어 보세요!");
         }
 
-        // 💡 3. 하이브리드 시간 연산 필터 작동 ( create_time 활용 )
-        const nowInSeconds = Math.floor(Date.now() / 1000);
-        if (timeFilter === "today") {
-          videoList = videoList.filter(v => (v.create_time || v.time) >= (nowInSeconds - 86400));
-        } else if (timeFilter === "week") {
-          videoList = videoList.filter(v => (v.create_time || v.time) >= (nowInSeconds - 7 * 86400));
-        } else if (timeFilter === "month") {
-          videoList = videoList.filter(v => (v.create_time || v.time) >= (nowInSeconds - 30 * 86400));
+        // 💡 3. 날짜 필터 (샤오홍슈는 날짜 필터 패스하여 0개 필터링 버그 예방!)
+        if (platform === "tiktok") {
+          const nowInSeconds = Math.floor(Date.now() / 1000);
+          if (timeFilter === "today") {
+            videoList = videoList.filter(v => (v.create_time || v.time) >= (nowInSeconds - 86400));
+          } else if (timeFilter === "week") {
+            videoList = videoList.filter(v => (v.create_time || v.time) >= (nowInSeconds - 7 * 86400));
+          } else if (timeFilter === "month") {
+            videoList = videoList.filter(v => (v.create_time || v.time) >= (nowInSeconds - 30 * 86400));
+          }
         }
 
         if (videoList.length === 0) {
-          throw new Error("선택하신 기간(예: 오늘/이번 주) 내에 새로 업로드된 대박 쇼츠가 없습니다. 기간을 더 넓혀 보세요!");
+          throw new Error("선택하신 기간 내에 조건이 일치하는 쇼츠가 없습니다.");
         }
 
-        // 💡 4. 하이브리드 정렬 필터 작동
-        if (sortFilter === "likes") {
-          videoList.sort((a, b) => (b.digg_count || b.likes || b.liked_count || 0) - (a.digg_count || a.likes || a.liked_count || 0));
-        } else if (sortFilter === "views") {
-          videoList.sort((a, b) => (b.play_count || b.views || b.collects || 0) - (a.play_count || a.views || a.collects || 0));
-        } else if (sortFilter === "comments") {
-          videoList.sort((a, b) => (b.comment_count || b.comments || b.comments_count || 0) - (a.comment_count || a.comments || a.comments_count || 0));
-        } else if (sortFilter === "latest") {
-          videoList.sort((a, b) => (b.create_time || b.time || 0) - (a.create_time || a.time || 0));
+        // 💡 4. 정렬 필터 작동
+        if (platform === "tiktok") {
+          if (sortFilter === "likes") {
+            videoList.sort((a, b) => (b.digg_count || 0) - (a.digg_count || 0));
+          } else if (sortFilter === "views") {
+            videoList.sort((a, b) => (b.play_count || 0) - (a.play_count || 0));
+          } else if (sortFilter === "comments") {
+            videoList.sort((a, b) => (b.comment_count || 0) - (a.comment_count || 0));
+          } else if (sortFilter === "latest") {
+            videoList.sort((a, b) => (b.create_time || 0) - (a.create_time || 0));
+          }
+        } else {
+          if (sortFilter === "likes") {
+            videoList.sort((a, b) => (b.likes || b.liked_count || b.likedCount || 0) - (a.likes || a.liked_count || a.likedCount || 0));
+          } else if (sortFilter === "views") {
+            videoList.sort((a, b) => (b.collects || b.collected_count || b.collectedCount || 0) - (a.collects || a.collected_count || a.collectedCount || 0));
+          } else if (sortFilter === "comments") {
+            videoList.sort((a, b) => (b.comments || b.comment_count || b.comments_count || 0) - (a.comments || a.comment_count || a.comments_count || 0));
+          }
         }
 
-        // 최종 상위 30개 커트 후 렌더링
+        // 30개 커트 후 렌더링
         const finalData = videoList.slice(0, 30);
         document.getElementById('resultCount').innerText = `총 ${finalData.length}개 발견`;
         resultsArea.classList.remove('hidden');
 
         finalData.forEach(item => {
-          // 플랫폼별 구조 표준화(Normalization) 기법 적용!
           let v = {};
           if (platform === "tiktok") {
             const likesCount = item.digg_count >= 10000 ? (item.digg_count / 10000).toFixed(1) + "만" : item.digg_count;
@@ -684,7 +779,6 @@
               titleRaw: item.title || "수동영상"
             };
           } else {
-            // 샤오홍슈 표준화
             const coverUrl = item.cover?.url || item.cover_url || "https://images.unsplash.com/photo-1542291026-7eec264c27ff";
             const likesVal = item.likes || item.liked_count || item.collects || 0;
             const likesCount = likesVal >= 10000 ? (likesVal / 10000).toFixed(1) + "만" : likesVal;
@@ -721,10 +815,8 @@
                     <img src="${v.avatar}" class="w-4 h-4 rounded-full border border-gray-200" alt="Avatar">
                     <span class="text-xs font-bold text-gray-600 truncate">${v.author}</span>
                   </div>
-                  <!-- 🔎 글씨 크기 text-sm font-extrabold로 뻥튀기! -->
                   <p class="text-sm font-extrabold text-gray-900 line-clamp-3 leading-snug mb-1 hover:text-blue-600">${v.title}</p>
                 </div>
-                <!-- 🔎 수치 배지 크기 상향 (text-xs) -->
                 <div class="flex items-center gap-3 text-xs text-gray-500 font-bold">
                   <span class="text-rose-500">❤️ ${v.likes}</span>
                   <span>💬 ${v.comments}</span>
@@ -733,7 +825,6 @@
             </a>
             
             <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
-              <!-- 💾 썸네일 제목 저장용 encodedTitle 주입 완료 -->
               <button onclick="forceDownloadWithFallback('${v.play}', '${platform === 'tiktok' ? '틱톡' : '샤오홍슈'}', '${encodedTitle}')" class="py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-200 transition text-center flex items-center justify-center gap-1">
                 <span>⬇️ 제목저장</span>
               </button>
@@ -753,10 +844,9 @@
       }
     }
 
-    // 트렌드 분석 가동부
     async function analyzeDirectTrendingVideo(videoUrl, encodedTitle) {
       const apiKey = localStorage.getItem('myGeminiKey');
-      if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 무료 API 키를 먼저 등록해 주세요!");
+      if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
 
       const title = decodeURIComponent(encodedTitle);
       const resultBox = document.getElementById('resultBox');
@@ -766,7 +856,6 @@
       document.getElementById('engineBadge').classList.add('hidden');
       resultBox.classList.add('hidden');
       logStatus(`🎬 [원클릭 트렌드 분석] 백그라운드 영상 정밀 해부 작동 중...`);
-      logStatus(`영상: ${title}`);
 
       try {
         const response = await fetch(videoUrl);
@@ -779,7 +868,13 @@
           const base64Video = reader.result.split(',')[1];
           try {
             const result = await tryGeminiWithFallback(apiKey, base64Video, blob.type, getInstructionPrompt());
-            document.getElementById('geminiOutput').innerText = result.text;
+            
+            // 💡 전체 복사용 저장
+            window.currentFullOutput = result.text;
+
+            // 💡 5단 분리 렌더링 시작!
+            parseAndRenderOutput(result.text);
+
             document.getElementById('engineBadge').innerText = `엔진: ${result.engine}`;
             document.getElementById('engineBadge').classList.remove('hidden');
             resultBox.classList.remove('hidden');
@@ -791,7 +886,7 @@
         reader.readAsDataURL(blob);
 
       } catch (error) {
-        logStatus(`⚠️ [CORS 제한 감지] 비디오 다이렉트 인출 실패. 안전한 우회 모드로 자동 변경합니다.`, 'error');
+        logStatus(`⚠️ [CORS 제한 감지] 비디오 리소스 다이렉트 인출 실패. 안전한 우회 모드를 가이드합니다.`, 'error');
         alert(`💡 브라우저 보안 규정(CORS)으로 인해 영상 주소 직접 인출이 제한되었습니다.\n\n해당 카드의 [⬇️ 제목저장] 버튼을 누른 뒤, "🔗 개별 링크 수동 분석" 탭의 [2단계] 업로드 창에 비디오 파일을 올려주시면 즉시 번역됩니다!`);
       }
     }
