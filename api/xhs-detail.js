@@ -66,6 +66,18 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    if (noteId) {
+      const primaryXhsResult = await callLegacyXhsApi().catch((primaryError) => ({
+        ok: false,
+        status: 502,
+        error: primaryError.message,
+      }));
+
+      if (primaryXhsResult.ok) {
+        return res.status(200).json({ ok: true, source: "xiaohongshu-all-api", data: primaryXhsResult.data });
+      }
+    }
+
     const upstreamUrl = `https://${REDNOTE_HOST}/parse`;
     const canonicalUrl = /^[0-9a-fA-F]{24}$/.test(noteId)
       ? `https://www.xiaohongshu.com/discovery/item/${noteId}`
@@ -80,7 +92,7 @@ module.exports = async function handler(req, res) {
     let lastResponseText = "";
 
     for (const rednoteUrl of rednoteUrls) {
-      for (let attempt = 1; attempt <= 3; attempt++) {
+      for (let attempt = 1; attempt <= 1; attempt++) {
         upstream = await fetch(upstreamUrl, {
           method: "POST",
           headers: {
