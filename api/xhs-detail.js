@@ -67,26 +67,52 @@ module.exports = async function handler(req, res) {
 
   try {
     const upstreamUrl = `https://${REDNOTE_HOST}/parse`;
-    const rednoteUrl =
-      sourceUrl || `https://www.xiaohongshu.com/discovery/item/${encodeURIComponent(noteId)}`;
+    const canonicalUrl = /^[0-9a-fA-F]{24}$/.test(noteId)
+      ? `https://www.xiaohongshu.com/discovery/item/${noteId}`
+      : "";
+    const rednoteUrls = [...new Set([canonicalUrl, sourceUrl].filter(Boolean))];
+    if (rednoteUrls.length === 0 && noteId) {
+      rednoteUrls.push(`https://www.xiaohongshu.com/discovery/item/${encodeURIComponent(noteId)}`);
+    }
 
-    const upstream = await fetch(upstreamUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-rapidapi-host": REDNOTE_HOST,
-        "x-rapidapi-key": apiKey,
-      },
-      body: JSON.stringify({ url: rednoteUrl }),
-    });
-
-    const text = await upstream.text();
+    let upstream;
     let data;
+    let lastResponseText = "";
 
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = { raw: text };
+    for (const rednoteUrl of rednoteUrls) {
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        upstream = await fetch(upstreamUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-rapidapi-host": REDNOTE_HOST,
+            "x-rapidapi-key": apiKey,
+          },
+          body: JSON.stringify({ url: rednoteUrl }),
+        });
+
+        lastResponseText = await upstream.text();
+
+        try {
+          data = JSON.parse(lastResponseText);
+        } catch {
+          data = { raw: lastResponseText };
+        }
+
+        if (upstream.ok || upstream.status < 500) {
+          break;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, attempt * 700));
+      }
+
+      if (upstream.ok || upstream.status < 500) {
+        break;
+      }
+    }
+
+    if (!upstream) {
+      return res.status(400).json({ ok: false, error: "No valid Rednote URL found" });
     }
 
     res.setHeader("x-ratelimit-requests-remaining", upstream.headers.get("x-ratelimit-requests-remaining") || "");
