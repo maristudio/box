@@ -452,25 +452,19 @@
   };
 
   function checkPassword() {
-   // 💡 보안 세션 검증으로 변경 (탭 닫으면 초기화)
-   const savedPass = safeStorage.getSession('sitePassword');
    const modal = document.getElementById('doorlockModal');
    const workspace = document.getElementById('mainWorkspace');
-   if (savedPass === MY_PASSWORD) {
-    modal.classList.add('hidden');
-    workspace.classList.remove('blur-active');
-   } else {
-    modal.classList.remove('hidden');
-    workspace.classList.add('blur-active');
-   }
+   modal.classList.remove('hidden');
+   workspace.classList.add('blur-active');
+   safeStorage.setSession('sitePassword', '');
   }
 
   // 비밀번호 체크
   function submitPassword() {
    const inputPass = document.getElementById('sitePassInput').value.trim();
    if (inputPass === MY_PASSWORD) {
-    safeStorage.setSession('sitePassword', MY_PASSWORD);
-    checkPassword();
+    document.getElementById('doorlockModal').classList.add('hidden');
+    document.getElementById('mainWorkspace').classList.remove('blur-active');
    } else {
     alert("🔒 비밀번호가 올바르지 않습니다!");
     document.getElementById('sitePassInput').value = "";
