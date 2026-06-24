@@ -1185,6 +1185,7 @@
               author: `@${item.author.unique_id}`,
               avatar: item.author.avatar,
               likes: likesCount,
+              views: viewsCount,
               comments: item.comment_count,
               duration: item.duration,
               play: item.hdplay || item.play,
@@ -1223,6 +1224,15 @@
               ['interactInfo', 'likedCount']
             ], 0);
             const likesCount = likesVal >= 10000 ? (likesVal / 10000).toFixed(1) + "만" : likesVal;
+
+            const collectsVal = resolveField(noteObj, [
+              ['collected_count'],
+              ['collectedCount'],
+              ['collects'],
+              ['interact_info', 'collected_count'],
+              ['interactInfo', 'collectedCount']
+            ], 0);
+            const collectsCount = collectsVal >= 10000 ? (collectsVal / 10000).toFixed(1) + "만" : collectsVal;
 
             const commentsVal = resolveField(noteObj, [
               ['comments_count'],
@@ -1263,6 +1273,7 @@
               author: authorName,
               avatar: authorAvatar,
               likes: likesCount,
+              views: collectsCount,
               comments: commentsVal,
               duration: 15,
               play: playUrl,
@@ -1277,7 +1288,7 @@
             <a href="${v.url}" target="_blank" class="flex gap-4 text-decoration-none color-inherit cursor-pointer hover:opacity-90">
               <div class="relative w-24 h-32 bg-black rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 shadow-sm">
                 <img src="${v.cover}" class="w-full h-full object-cover" alt="Video cover">
-                <span class="absolute bottom-1 right-1 text-[11px] bg-black/60 text-white px-2 py-0.5 rounded font-bold">👀 ${v.likes}</span>
+                <span class="absolute bottom-1 right-1 text-[11px] bg-black/60 text-white px-2 py-0.5 rounded font-bold">👀 ${v.views || v.likes}</span>
               </div>
               <div class="flex-1 min-w-0 flex flex-col justify-between">
                 <div>
