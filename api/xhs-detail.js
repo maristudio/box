@@ -28,6 +28,43 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  async function callLegacyXhsApi() {
+    if (!noteId) {
+      throw new Error("noteId is required for fallback");
+    }
+
+    const fallbackUrl =
+      `https://${LEGACY_XHS_HOST}/api/xiaohongshu/get-note-detail/v5?noteId=${encodeURIComponent(noteId)}`;
+
+    const fallback = await fetch(fallbackUrl, {
+      method: "GET",
+      headers: {
+        "x-rapidapi-host": LEGACY_XHS_HOST,
+        "x-rapidapi-key": apiKey,
+      },
+    });
+
+    const text = await fallback.text();
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { raw: text };
+    }
+
+    if (!fallback.ok) {
+      return {
+        ok: false,
+        status: fallback.status,
+        error: data?.message || data?.msg || data?.error || "Fallback XHS API request failed",
+        data,
+      };
+    }
+
+    return { ok: true, data };
+  }
+
   try {
     const upstreamUrl = `https://${REDNOTE_HOST}/parse`;
     const rednoteUrl =
@@ -56,6 +93,31 @@ module.exports = async function handler(req, res) {
     res.setHeader("x-ratelimit-requests-limit", upstream.headers.get("x-ratelimit-requests-limit") || "");
 
     if (!upstream.ok) {
+      if (upstream.status >= 500 && noteId) {
+        const fallbackResult = await callLegacyXhsApi().catch((fallbackError) => ({
+          ok: false,
+          status: 502,
+          error: fallbackError.message,
+        }));
+
+        if (fallbackResult.ok) {
+          return res.status(200).json({
+            ok: true,
+            source: "fallback-xhs",
+            warning: `Rednote HD Video API failed first (Status: ${upstream.status}), fallback succeeded.`,
+            data: fallbackResult.data,
+          });
+        }
+
+        return res.status(upstream.status).json({
+          ok: false,
+          status: upstream.status,
+          error: `Rednote HD Video API failed (Status: ${upstream.status}); fallback also failed (Status: ${fallbackResult.status || "unknown"})`,
+          data,
+          fallback: fallbackResult,
+        });
+      }
+
       return res.status(upstream.status).json({
         ok: false,
         status: upstream.status,
@@ -75,36 +137,13 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-      const fallbackUrl =
-        `https://${LEGACY_XHS_HOST}/api/xiaohongshu/get-note-detail/v5?noteId=${encodeURIComponent(noteId)}`;
+      const fallbackResult = await callLegacyXhsApi();
 
-      const fallback = await fetch(fallbackUrl, {
-        method: "GET",
-        headers: {
-          "x-rapidapi-host": LEGACY_XHS_HOST,
-          "x-rapidapi-key": apiKey,
-        },
-      });
-
-      const text = await fallback.text();
-      let data;
-
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = { raw: text };
+      if (!fallbackResult.ok) {
+        return res.status(fallbackResult.status || 502).json(fallbackResult);
       }
 
-      if (!fallback.ok) {
-        return res.status(fallback.status).json({
-          ok: false,
-          status: fallback.status,
-          error: data?.message || data?.msg || data?.error || "Fallback XHS API request failed",
-          data,
-        });
-      }
-
-      return res.status(200).json({ ok: true, data });
+      return res.status(200).json({ ok: true, source: "fallback-xhs", data: fallbackResult.data });
     } catch (fallbackError) {
       return res.status(502).json({
         ok: false,
