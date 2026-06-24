@@ -786,9 +786,51 @@
    document.getElementById('trendResultsArea').classList.add('hidden');
   }
 
+  function requestExtensionAction(type, payload = {}, timeoutMs = 8000) {
+   return new Promise((resolve, reject) => {
+    const requestId = `gss_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const timer = setTimeout(() => {
+     window.removeEventListener('message', onMessage);
+     reject(new Error("확장 프로그램 응답 없음"));
+    }, timeoutMs);
+
+    function onMessage(event) {
+     if (event.source !== window) return;
+     if (!event.data || event.data.source !== "GSS_EXTENSION") return;
+     if (event.data.requestId !== requestId) return;
+
+     clearTimeout(timer);
+     window.removeEventListener('message', onMessage);
+     resolve(event.data.response || {});
+    }
+
+    window.addEventListener('message', onMessage);
+    window.postMessage({
+     source: "GSS_WEB_APP",
+     type,
+     requestId,
+     ...payload
+    }, "*");
+   });
+  }
+
   async function forceDownloadWithFallback(videoUrl, platformName, rawTitle = "") {
    const safeTitle = rawTitle ? sanitizeFilename(decodeURIComponent(rawTitle)) : Date.now();
    const filename = `[${platformName}]_${safeTitle}.mp4`;
+   try {
+    const extensionResult = await requestExtensionAction("DOWNLOAD_VIDEO", {
+     url: videoUrl,
+     filename
+    }, 5000);
+
+    if (extensionResult.success) {
+     alert(`🎉 ${filename} 다운로드를 시작했습니다. 크롬 다운로드 목록을 확인해 주세요!`);
+     return;
+    }
+   } catch (extensionError) {
+    // 확장 프로그램이 없거나 꺼져 있으면 일반 브라우저 방식으로 이어갑니다.
+   }
+
    try {
     const response = await fetch(videoUrl);
     if (!response.ok) throw new Error("CORS 방어");

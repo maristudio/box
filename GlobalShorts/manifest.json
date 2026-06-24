@@ -14,7 +14,8 @@
     "https://generativelanguage.googleapis.com/*",
     "https://www.tikwm.com/*",
     "https://*.xiaohongshu.com/*",
-    "https://*.xhslink.com/*"
+    "https://*.xhslink.com/*",
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"
