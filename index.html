@@ -49,6 +49,7 @@
       <div class="flex border-b border-gray-100 bg-gray-50">
         <button id="tab1Btn" onclick="switchTab(1)" class="flex-1 py-4 text-center font-bold border-b-2 border-black text-black transition">🔗 개별 링크 수동 분석</button>
         <button id="tab2Btn" onclick="switchTab(2)" class="flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition">🔥 실시간 트렌드 발굴기</button>
+        <button id="tab3Btn" onclick="switchTab(3)" class="flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition">📸 이미지로 상품 분석</button>
       </div>
       <!-- 탭 1 -->
       <div id="tab1Content" class="p-8 space-y-6">
@@ -90,14 +91,15 @@
           <span class="text-lg">💡</span>
           <div>
             <strong class="font-bold">틱톡 & 샤오홍슈 실시간 수집 연동 (100개 광역 탐색 후 좋아요 정밀 정렬)</strong><br>
-            키워드 버튼을 누르고 **수집 기간**과 **정렬 기준**을 조합해 보세요! 샤오홍슈로 검색하면 **한국어를 중국어로 자동 변환**해 긁어옵니다.
+            키워드 버튼을 누르고 "수집 기간"과 "정렬 기준"을 조합해 보세요! 샤오홍슈로 검색하면 "한국어를 중국어로 자동 변환"해 긁어옵니다.
           </div>
         </div>
-        <div class="flex flex-col md:flex-row gap-3">
+        <div class="flex flex-col md:flex-row gap-3 items-center">
           <select id="platformSelect" class="px-4 py-3 rounded-xl border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black transition font-bold text-gray-700">
             <option value="tiktok" selected>틱톡 🚀</option>
             <option value="xhs">샤오홍슈 📕</option>
           </select>
+          <span id="rapidApiQuotaBadge" class="hidden text-xs bg-gray-100 text-gray-700 px-3 py-2.5 rounded-xl border border-gray-200 font-bold font-mono"></span>
           <input type="text" id="trendKeyword" onkeydown="if(event.key === 'Enter') discoverTrends()" placeholder="원하는 검색어가 있다면 직접 입력 후 엔터를 치세요!" class="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black transition text-sm">
           
           <select id="trendTimeFilter" class="px-4 py-3 rounded-xl border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black transition font-bold text-gray-700">
@@ -134,6 +136,73 @@
           <div id="trendResultsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-h-[600px] overflow-y-auto pr-2"></div>
         </div>
       </div>
+      <!-- 탭 3: 이미지 상품 분석기 -->
+      <div id="tab3Content" class="hidden p-8 space-y-6">
+        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-xs text-blue-800 flex items-start gap-3">
+          <span class="text-lg">💡</span>
+          <div>
+            <strong class="font-bold">AI 이미지 상품 분석기 (100% 무료 Gemini API 활용)</strong><br>
+            제품 사진이나 쇼츠 캡처 이미지를 아래에 올리시면, AI가 상품 정보를 식별하고 각 쇼핑몰(쿠팡, 타오바오, 아마존)에서 쓰기 좋은 최적의 다국어 키워드와 핵심 소구점을 분석해 드립니다.
+          </div>
+        </div>
+        <div class="space-y-4">
+          <label for="productImageUpload" class="file-drop-area w-full flex flex-col items-center justify-center px-4 py-8 rounded-2xl bg-white border border-gray-200">
+            <span class="text-3xl mb-2">📸</span>
+            <span id="imgNameDisplay" class="text-sm text-gray-500 font-medium">여기를 클릭하거나 분석할 상품 이미지를 끌어다 놓으세요</span>
+            <input type="file" id="productImageUpload" accept="image/*" class="hidden" onchange="updateImageFileName(this)">
+          </label>
+          <button id="analyzeImageBtn" onclick="runGeminiImageAnalysis()" class="w-full bg-blue-600 text-white px-5 py-3.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-md text-sm flex items-center justify-center gap-2">
+            <span>🪄 이미지 속 상품 분석하기</span>
+          </button>
+        </div>
+        <!-- 이미지 분석 결과 출력창 -->
+        <div id="imageAnalysisResultBox" class="hidden p-6 bg-white border border-blue-200 rounded-3xl shadow-lg space-y-6 fade-in">
+          <div class="border-b border-gray-100 pb-3 flex items-center justify-between">
+            <span class="text-sm font-extrabold text-blue-600">📸 이미지 상품 분석 리포트</span>
+            <span id="imageEngineBadge" class="text-[10px] bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold font-mono border border-blue-200"></span>
+          </div>
+          
+          <div class="space-y-4">
+            <!-- 1. 상품명 및 요약 -->
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <h5 class="text-xs font-bold text-gray-400 mb-1">분석된 상품 명칭</h5>
+              <div id="detectedProductName" class="text-sm font-extrabold text-gray-800 font-sans"></div>
+            </div>
+            <!-- 2. 다국어 키워드 보드 -->
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
+              <h5 class="text-xs font-bold text-gray-400">쇼핑몰 검색용 최적 키워드</h5>
+              
+              <div class="space-y-2">
+                <!-- 쿠팡 (한글) -->
+                <div class="flex items-center gap-3">
+                  <span class="w-24 text-[10px] bg-red-50 text-red-600 font-bold px-2 py-1 rounded text-center whitespace-nowrap">쿠팡 (KOR)</span>
+                  <span id="kwCoupang" class="flex-1 text-xs font-semibold truncate bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-800 font-sans"></span>
+                  <button onclick="copySingleSection('kwCoupang', '쿠팡 키워드')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-blue-200 transition whitespace-nowrap">📋 복사</button>
+                </div>
+                
+                <!-- 타오바오/1688 (중국어) -->
+                <div class="flex items-center gap-3">
+                  <span class="w-24 text-[10px] bg-orange-50 text-orange-600 font-bold px-2 py-1 rounded text-center whitespace-nowrap">타오바오 (CHN)</span>
+                  <span id="kwTaobao" class="flex-1 text-xs font-semibold truncate bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-800 font-sans"></span>
+                  <button onclick="copySingleSection('kwTaobao', '중국어 키워드')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-blue-200 transition whitespace-nowrap">📋 복사</button>
+                </div>
+                
+                <!-- 아마존/알리 (영어) -->
+                <div class="flex items-center gap-3">
+                  <span class="w-24 text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-1 rounded text-center whitespace-nowrap">알리/아마존 (ENG)</span>
+                  <span id="kwEnglish" class="flex-1 text-xs font-semibold truncate bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-800 font-sans"></span>
+                  <button onclick="copySingleSection('kwEnglish', '영어 키워드')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-blue-200 transition whitespace-nowrap">📋 복사</button>
+                </div>
+              </div>
+            </div>
+            <!-- 3. 핵심 셀링 포인트 -->
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <h5 class="text-xs font-bold text-gray-400 mb-2">💡 마케팅 핵심 소구점 (3대 포인트)</h5>
+              <pre id="productSellingPoints" class="text-gray-800 text-xs whitespace-pre-wrap leading-relaxed font-sans font-semibold"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- 결과 및 터미널 -->
       <div class="p-8 border-t border-gray-100 bg-gray-50 space-y-4 w-full">
         <div id="engineStatusBox" class="hidden p-4 bg-gray-900 text-gray-200 rounded-xl font-mono text-xs space-y-2 border border-gray-800 shadow-inner">
@@ -164,6 +233,7 @@
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">1. RapidAPI Key (샤오홍슈 전용)</label>
             <input type="password" id="rapidKey" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-sm">
+            <span id="settingsQuotaBadge" class="hidden mt-1.5 block text-xs font-semibold text-emerald-600 font-mono"></span>
           </div>
           <div>
             <label class="block text-sm font-semibold text-emerald-700 mb-1">2. Gemini API Key (무료)</label>
@@ -185,6 +255,23 @@
     // 💡 우리만의 비밀번호
     const MY_PASSWORD = "1234";
     window.currentFullOutput = "";
+    // 다중 경로 안전 값 추출기
+    function resolveField(item, paths, defaultValue) {
+      for (const path of paths) {
+        let current = item;
+        for (const key of path) {
+          if (current == null) {
+            current = undefined;
+            break;
+          }
+          current = current[key];
+        }
+        if (current !== undefined && current !== null && current !== "") {
+          return current;
+        }
+      }
+      return defaultValue;
+    }
     function sanitizeFilename(name) {
       return name.replace(/[\\/:*?"<>|]/g, '').trim().substring(0, 15);
     }
@@ -226,18 +313,40 @@
     function switchTab(tabNum) {
       const btn1 = document.getElementById('tab1Btn');
       const btn2 = document.getElementById('tab2Btn');
+      const btn3 = document.getElementById('tab3Btn');
       const content1 = document.getElementById('tab1Content');
       const content2 = document.getElementById('tab2Content');
+      const content3 = document.getElementById('tab3Content');
+      // Reset all buttons and hide contents
+      btn1.className = "flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition";
+      btn2.className = "flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition";
+      btn3.className = "flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition";
+      
+      content1.classList.add('hidden');
+      content2.classList.add('hidden');
+      content3.classList.add('hidden');
       if (tabNum === 1) {
         btn1.className = "flex-1 py-4 text-center font-bold border-b-2 border-black text-black transition";
-        btn2.className = "flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition";
         content1.classList.remove('hidden');
-        content2.classList.add('hidden');
-      } else {
+      } else if (tabNum === 2) {
         btn2.className = "flex-1 py-4 text-center font-bold border-b-2 border-black text-black transition";
-        btn1.className = "flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition";
         content2.classList.remove('hidden');
-        content1.classList.add('hidden');
+      } else if (tabNum === 3) {
+        btn3.className = "flex-1 py-4 text-center font-bold border-b-2 border-black text-black transition";
+        content3.classList.remove('hidden');
+      }
+    }
+    function updateQuotaUI(remaining, limit) {
+      const badge = document.getElementById('rapidApiQuotaBadge');
+      if (badge && remaining !== null && limit !== null) {
+        badge.innerText = `📕 XHS API: ${remaining} / ${limit}`;
+        badge.classList.remove('hidden');
+      }
+      
+      const settingsBadge = document.getElementById('settingsQuotaBadge');
+      if (settingsBadge && remaining !== null && limit !== null) {
+        settingsBadge.innerText = `남은 API 횟수: ${remaining} / ${limit} 회`;
+        settingsBadge.classList.remove('hidden');
       }
     }
     function startWorkflow() {
@@ -520,9 +629,23 @@
           const apiKey = localStorage.getItem('myRapidKey');
           if(!apiKey) throw new Error("⚙️ RapidAPI 키 누락");
           let noteId = linkInput.match(/[0-9a-fA-F]{24}/) ? linkInput.match(/[0-9a-fA-F]{24}/)[0] : linkInput;
-          const url = `https://xiaohongshu-all-api.p.rapidapi.com/api/xiaohongshu/get-note-detail/v5?noteId=${noteId}`;
-          const res = await fetch(url, { headers: { 'x-rapidapi-host': 'xiaohongshu-all-api.p.rapidapi.com', 'x-rapidapi-key': apiKey } });
+          const url = `https://xiao-hong-shu-ni-de-sheng-huo-zhi-nan-xiaohongshu-data-crawler.p.rapidapi.com/api/moreapi/xhs/note_detail`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-rapidapi-host': 'xiao-hong-shu-ni-de-sheng-huo-zhi-nan-xiaohongshu-data-crawler.p.rapidapi.com',
+              'x-rapidapi-key': apiKey
+            },
+            body: JSON.stringify({ note_id: noteId })
+          });
           const result = await res.json();
+          
+          const remaining = res.headers.get('x-ratelimit-requests-remaining');
+          const limit = res.headers.get('x-ratelimit-requests-limit');
+          if (remaining !== null && limit !== null) {
+            updateQuotaUI(remaining, limit);
+          }
           let finalVideoUrl = null;
           let finalTitle = "샤오홍슈수동";
           function findVideo(obj) {
@@ -531,7 +654,10 @@
             for (let key in obj) { if (finalVideoUrl) return; findVideo(obj[key]); }
           }
           findVideo(result);
-          if(result.title) finalTitle = result.title;
+          
+          const noteObj = result.data || result.note || result || {};
+          const titleVal = resolveField(noteObj, [['title'], ['desc']], "샤오홍슈수동");
+          finalTitle = titleVal;
           if(finalVideoUrl) await forceDownloadWithFallback(finalVideoUrl, "샤오홍슈", finalTitle);
           else throw new Error("비디오 리소스를 찾지 못했습니다.");
         }
@@ -761,11 +887,18 @@
           }
           
           logStatus(`📥 [샤오홍슈 수집] "${finalKeyword}" 키워드로 수집 가동 중...`);
-          const res = await fetch(`https://xiaohongshu-all-api.p.rapidapi.com/api/xiaohongshu/search-note/v2?keyword=${encodeURIComponent(finalKeyword)}&page=1&pageSize=20`, {
+          const res = await fetch(`https://xiao-hong-shu-ni-de-sheng-huo-zhi-nan-xiaohongshu-data-crawler.p.rapidapi.com/api/moreapi/xhs/search`, {
+            method: 'POST',
             headers: {
-              'x-rapidapi-host': 'xiaohongshu-all-api.p.rapidapi.com',
+              'Content-Type': 'application/json',
+              'x-rapidapi-host': 'xiao-hong-shu-ni-de-sheng-huo-zhi-nan-xiaohongshu-data-crawler.p.rapidapi.com',
               'x-rapidapi-key': asciiOnlyKey
-            }
+            },
+            body: JSON.stringify({
+              keyword: finalKeyword,
+              page: 1,
+              page_size: 20
+            })
           });
           
           if (!res.ok) {
@@ -774,6 +907,11 @@
           }
           
           const result = await res.json();
+          const remaining = res.headers.get('x-ratelimit-requests-remaining');
+          const limit = res.headers.get('x-ratelimit-requests-limit');
+          if (remaining !== null && limit !== null) {
+            updateQuotaUI(remaining, limit);
+          }
           
           // 💡 [초정밀 자동 목록 탐지 장치] notes, items, list 혹은 data 자체 배열을 추적
           let rawList = result.data?.notes || result.data?.items || result.data?.list || result.data || [];
@@ -822,26 +960,33 @@
             videoList.sort((a, b) => (b.create_time || 0) - (a.create_time || 0));
           }
         } else {
-          // 샤오홍슈 정렬 필터 매핑 (note 내부 객체 데이터 정밀 매칭)
+          // 샤오홍슈 정렬 필터 매핑 (다중 구조 대응)
           if (sortFilter === "likes") {
             videoList.sort((a, b) => {
-              const aVal = a.note?.liked_count || a.note?.likedCount || 0;
-              const bVal = b.note?.liked_count || b.note?.likedCount || 0;
+              const aVal = resolveField(a, [['note', 'liked_count'], ['note', 'likedCount'], ['note', 'likes'], ['interact_info', 'liked_count'], ['liked_count'], ['likes']], 0);
+              const bVal = resolveField(b, [['note', 'liked_count'], ['note', 'likedCount'], ['note', 'likes'], ['interact_info', 'liked_count'], ['liked_count'], ['likes']], 0);
               return bVal - aVal;
             });
           } else if (sortFilter === "views") {
             videoList.sort((a, b) => {
-              const aVal = a.note?.collected_count || a.note?.collectedCount || a.note?.collects || 0;
-              const bVal = b.note?.collected_count || b.note?.collectedCount || b.note?.collects || 0;
+              const aVal = resolveField(a, [['note', 'collected_count'], ['note', 'collectedCount'], ['note', 'collects'], ['interact_info', 'collect_count'], ['collected_count']], 0);
+              const bVal = resolveField(b, [['note', 'collected_count'], ['note', 'collectedCount'], ['note', 'collects'], ['interact_info', 'collect_count'], ['collected_count']], 0);
               return bVal - aVal;
             });
           } else if (sortFilter === "comments") {
             videoList.sort((a, b) => {
-              const aVal = a.note?.comments_count || a.note?.commentsCount || a.note?.comments || 0;
-              const bVal = b.note?.comments_count || b.note?.commentsCount || b.note?.comments || 0;
+              const aVal = resolveField(a, [['note', 'comments_count'], ['note', 'commentsCount'], ['note', 'comments'], ['interact_info', 'comments_count'], ['comments_count']], 0);
+              const bVal = resolveField(b, [['note', 'comments_count'], ['note', 'commentsCount'], ['note', 'comments'], ['interact_info', 'comments_count'], ['comments_count']], 0);
               return bVal - aVal;
             });
           }
+        }
+        // 💡 [실시간 수집 로그 디버그 장치] 수집된 데이터 객체 분석용 상태 모니터 출력
+        if (videoList.length > 0) {
+          const testItem = videoList[0];
+          const rootKeys = Object.keys(testItem || {}).join(', ');
+          const noteKeys = testItem.note ? Object.keys(testItem.note || {}).join(', ') : '없음(단일객체)';
+          logStatus(`🔍 [디버그] 수집데이터 구조 - 루트 키: [${rootKeys}] | note 키: [${noteKeys}]`, 'try');
         }
         const finalData = videoList.slice(0, 30);
         document.getElementById('resultCount').innerText = `총 ${finalData.length}개 발견`;
@@ -865,35 +1010,81 @@
               titleRaw: item.title || "수동영상"
             };
           } else {
-            // 💡 [중요] 샤오홍슈 데이터 파서 규칙 적용 (Nike Mock 데이터 탈출)
-            if (!item || !item.note) return; // note 객체 없는 아이템 스킵
-            const note = item.note;
-            let coverUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff";
-            let playUrl = "";
-            if (note.type === 'video') {
-              coverUrl = note.video_info_v2?.image?.thumbnail || (note.images_list && note.images_list[0]?.url_size_large) || coverUrl;
-              playUrl = note.video_info_v2?.media?.stream?.h264?.[0]?.master_url || "";
-            } else {
-              coverUrl = (note.images_list && (note.images_list[0]?.url_size_large || note.images_list[0]?.url)) || coverUrl;
-              playUrl = "";
-            }
-            const likesVal = note.liked_count || 0;
+            // 💡 [초강력 하이브리드 파서]: note 객체가 존재하면 note를 쓰고, 없으면 item 자체를 note로 취급
+            const noteObj = item.note || item || {};
+            // 1. Cover URL 파싱 (다양한 nested 경로 지원)
+            const coverUrl = resolveField(noteObj, [
+              ['cover', 'url_size_large'],
+              ['cover', 'url'],
+              ['images_list', 0, 'url_size_large'],
+              ['images_list', 0, 'url'],
+              ['imagesList', 0, 'urlSizeLarge'],
+              ['imagesList', 0, 'url'],
+              ['video_info_v2', 'image', 'thumbnail'],
+              ['videoInfoV2', 'image', 'thumbnail'],
+              ['cover_url'],
+              ['image']
+            ], "https://images.unsplash.com/photo-1542291026-7eec264c27ff");
+            // 2. Play URL 파싱
+            const playUrl = resolveField(noteObj, [
+              ['video_info_v2', 'media', 'stream', 'h264', 0, 'master_url'],
+              ['video_info_v2', 'media', 'stream', 'h264', 0, 'masterUrl'],
+              ['videoInfoV2', 'media', 'stream', 'h264', 0, 'masterUrl'],
+              ['video_info_v2', 'media', 'stream', 'h265', 0, 'master_url'],
+              ['video_url'],
+              ['master_url']
+            ], "");
+            // 3. Likes 파싱
+            const likesVal = resolveField(noteObj, [
+              ['liked_count'],
+              ['likedCount'],
+              ['likes'],
+              ['interact_info', 'liked_count'],
+              ['interactInfo', 'likedCount']
+            ], 0);
             const likesCount = likesVal >= 10000 ? (likesVal / 10000).toFixed(1) + "만" : likesVal;
-            const commentsVal = note.comments_count || 0;
-            const authorName = note.user?.nickname || "xhs_creator";
-            const authorAvatar = note.user?.avatar || note.user?.images || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde";
+            // 4. Comments 파싱
+            const commentsVal = resolveField(noteObj, [
+              ['comments_count'],
+              ['commentsCount'],
+              ['comments'],
+              ['interact_info', 'comments_count'],
+              ['interactInfo', 'commentsCount']
+            ], 0);
+            // 5. Author Name 파싱
+            const authorName = resolveField(noteObj, [
+              ['user', 'nickname'],
+              ['user', 'name'],
+              ['author', 'nickname'],
+              ['author', 'name'],
+              ['author_name']
+            ], "xhs_creator");
+            // 6. Author Avatar 파싱
+            const authorAvatar = resolveField(noteObj, [
+              ['user', 'avatar'],
+              ['user', 'images'],
+              ['user', 'avatar_url'],
+              ['author', 'avatar'],
+              ['avatar']
+            ], "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde");
+            // 7. Title 파싱
+            const titleText = resolveField(noteObj, [
+              ['title'],
+              ['desc']
+            ], "샤오홍슈 꿀템");
+            const idVal = resolveField(noteObj, [['id'], ['note_id']], item.id || Date.now());
             v = {
-              id: note.id || item.id,
-              url: `https://www.xiaohongshu.com/explore/${note.id || item.id}`,
+              id: idVal,
+              url: `https://www.xiaohongshu.com/explore/${idVal}`,
               cover: coverUrl,
-              title: note.title || note.desc || "샤오홍슈 꿀템",
+              title: titleText,
               author: authorName,
               avatar: authorAvatar,
               likes: likesCount,
               comments: commentsVal,
               duration: 15,
               play: playUrl,
-              titleRaw: note.title || note.desc || "샤오홍슈수동"
+              titleRaw: titleText
             };
           }
           const encodedTitle = encodeURIComponent(v.titleRaw);
@@ -986,6 +1177,98 @@
         logStatus(`💡 [대체 방법] '제목저장' 버튼을 눌러 비디오를 로컬에 받은 후, [탭 1]의 영상 업로드 분석 기능을 이용하시면 100% 정상 작동합니다.`, 'try');
         alert("⚠️ 브라우저 보안 제한으로 다이렉트 분석이 차단되었습니다.\n동영상을 컴퓨터에 저장한 뒤 [탭 1]에서 정제해 주세요!");
       }
+    }
+    function updateImageFileName(input) {
+      const display = document.getElementById('imgNameDisplay');
+      if(input.files && input.files[0]) {
+        display.innerHTML = `<span class='text-blue-600 font-bold'>선택됨: ${input.files[0].name}</span>`;
+      } else {
+        display.innerText = "여기를 클릭하거나 분석할 상품 이미지를 끌어다 놓으세요";
+      }
+    }
+    async function runGeminiImageAnalysis() {
+      const apiKey = localStorage.getItem('myGeminiKey');
+      if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
+      const fileInput = document.getElementById('productImageUpload');
+      if(!fileInput.files || fileInput.files.length === 0) return alert("분석할 이미지를 먼저 선택해 주세요!");
+      const file = fileInput.files[0];
+      const btn = document.getElementById('analyzeImageBtn');
+      const resultBox = document.getElementById('imageAnalysisResultBox');
+      const imageEngineBadge = document.getElementById('imageEngineBadge');
+      btn.innerHTML = "<div class='spinner'></div> <span>이미지 속 상품 식별 및 키워드 추출 중...</span>";
+      btn.classList.add('opacity-80', 'cursor-not-allowed');
+      resultBox.classList.add('hidden');
+      const reader = new FileReader();
+      reader.onload = async function() {
+        const base64Image = reader.result.split(',')[1];
+        
+        const prompt = `너는 지금부터 이미지 속 상품을 인식해서 스마트스토어/쿠팡 마케팅 키워드를 추출해주는 이커머스 전문가야.
+        제시된 이미지를 자세히 보고, 이 상품이 무엇인지 파악한 뒤 아래 형식에 정확하게 맞춰 출력해줘.
+        형식을 벗어난 설명이나 기술적 가이드는 절대 출력하지 마.
+        
+        [출력 형식]
+        ==================================================
+        [detected_name]
+        식별된 정확한 상품명칭 적기 (예: "다기능 스마트 약통 케이스")
+        
+        [keyword_coupang]
+        여기에 쿠팡/네이버 쇼핑몰 검색에 가장 유리한 한국어 키워드 3~5개를 컴마(,)로만 구분해서 한 줄로 나열해줘. (예: 스마트약통, 알약케이스, 영양제보관함)
+        
+        [keyword_taobao]
+        여기에 타오바오/1688에서 해당 도매 상품을 쉽게 찾을 수 있는 중국어 검색어 3~5개를 컴마(,)로만 구분해서 한 줄로 나열해줘. (예: 便携药盒, 收纳盒, 药箱)
+        
+        [keyword_english]
+        여기에 알리익스프레스/아마존/테무에서 검색할 수 있는 영어 키워드 3~5개를 컴마(,)로만 구분해서 한 줄로 나열해줘. (예: pill organizer, pill box, vitamin storage)
+        
+        [selling_points]
+        이 상품의 가장 강력한 마케팅 소구점 3가지를 정리해줘.
+        1. (첫 번째 소구점)
+        2. (두 번째 소구점)
+        3. (세 번째 소구점)
+        ==================================================`;
+        try {
+          // Gemini Multimodal call
+          const result = await tryGeminiWithFallback(apiKey, base64Image, file.type, prompt);
+          
+          // Parse results
+          const text = result.text;
+          
+          function extractSection(text, tag, endTags) {
+            const index = text.indexOf(tag);
+            if (index === -1) return "추출 실패";
+            const start = index + tag.length;
+            let end = text.length;
+            for (const et of endTags) {
+              const eIdx = text.indexOf(et);
+              if (eIdx !== -1 && eIdx < end && eIdx > start) {
+                end = eIdx;
+              }
+            }
+            return text.substring(start, end).trim();
+          }
+          const tags = ["[detected_name]", "[keyword_coupang]", "[keyword_taobao]", "[keyword_english]", "[selling_points]"];
+          
+          const name = extractSection(text, "[detected_name]", tags);
+          const kwCoupang = extractSection(text, "[keyword_coupang]", tags);
+          const kwTaobao = extractSection(text, "[keyword_taobao]", tags);
+          const kwEnglish = extractSection(text, "[keyword_english]", tags);
+          const points = extractSection(text, "[selling_points]", tags);
+          document.getElementById('detectedProductName').innerText = name;
+          document.getElementById('kwCoupang').innerText = kwCoupang;
+          document.getElementById('kwTaobao').innerText = kwTaobao;
+          document.getElementById('kwEnglish').innerText = kwEnglish;
+          document.getElementById('productSellingPoints').innerText = points;
+          imageEngineBadge.innerText = `엔진: ${result.engine}`;
+          resultBox.classList.remove('hidden');
+          resultBox.scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+          alert("🚨 에러: " + error.message);
+        } finally {
+          btn.innerHTML = "<span>🪄 이미지 속 상품 분석하기</span>";
+          btn.classList.remove('opacity-80', 'cursor-not-allowed');
+        }
+      };
+      reader.readAsDataURL(file);
     }
   </script>
 </body>
