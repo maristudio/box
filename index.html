@@ -1753,35 +1753,36 @@ ${finalFormat}`;
       await forceDownloadWithFallback(result.data.play, "틱톡", result.data.title || "개별다운로드");
      } else { throw new Error("영상을 찾을 수 없습니다."); }
     } else {
-     const apiKey = safeStorage.getLocal('myRapidKey');
-     if(!apiKey) throw new Error("⚙️ 설정창(⚙️)을 클릭하여 RapidAPI 키를 먼저 세팅해 주세요!");
-     
      let noteId = linkInput.match(/[0-9a-fA-F]{24}/) ? linkInput.match(/[0-9a-fA-F]{24}/)[0] : linkInput;
      
-     // 🚨 [진짜 해결책] 대장님이 진짜 사용 중이신 'xiaohongshu-all-api'의 GET v5 Endpoint로 전면 전환!
-     const url = `https://xiaohongshu-all-api.p.rapidapi.com/api/xiaohongshu/get-note-detail/v5?noteId=${noteId}`;
+     // Vercel 서버리스 프록시를 거쳐 호출합니다. 브라우저 직접 RapidAPI 호출은 CORS/502가 자주 납니다.
+     const apiKey = safeStorage.getLocal('myRapidKey');
+     const headers = apiKey ? { 'x-client-rapidapi-key': apiKey } : {};
+     const url = `/api/xhs-detail?url=${encodeURIComponent(linkInput)}&noteId=${encodeURIComponent(noteId)}`;
      const res = await fetch(url, {
       method: 'GET',
-      headers: {
-       'Content-Type': 'application/json',
-       'x-rapidapi-host': 'xiaohongshu-all-api.p.rapidapi.com',
-       'x-rapidapi-key': apiKey
-      }
+      headers
      });
 
+     const proxyResult = await res.json().catch(() => ({}));
      if (!res.ok) {
-      throw new Error(`RapidAPI 응답 실패 (Status: ${res.status}). API 키 혹은 호스트를 다시 점검하세요.`);
+      throw new Error(proxyResult.error || `RapidAPI 프록시 응답 실패 (Status: ${res.status}). Vercel 환경변수 RAPIDAPI_KEY 또는 설정창 키를 확인하세요.`);
      }
 
-     const result = await res.json();
+     if (!proxyResult.ok) {
+      throw new Error(proxyResult.error || "RapidAPI 프록시 응답 해독 실패");
+     }
+
+     const result = proxyResult.data || {};
       
      const remaining = res.headers.get('x-ratelimit-requests-remaining');
      const limit = res.headers.get('x-ratelimit-requests-limit');
-     if (remaining !== null && limit !== null) {
+     if (remaining && limit) {
       updateQuotaUI(remaining, limit);
      }
 
-     if (result.code !== 0) {
+     const failedCode = result.code !== undefined && ![0, 200, "0", "200"].includes(result.code);
+     if (failedCode || result.success === false || result.ok === false) {
       throw new Error(`[API 에러] ${result.msg || "데이터 해독 실패"}`);
      }
 
@@ -1791,19 +1792,27 @@ ${finalFormat}`;
      let finalTitle = "샤오홍슈수동";
 
      // 재귀적으로 데이터 객체 탐색
-     function findMedia(obj) {
+     function findMedia(obj, keyName = "") {
       if (!obj || typeof obj !== 'object') return;
-      // 비디오 URL 찾기
-      if (obj.master_url && obj.master_url.startsWith('http')) { 
-       finalVideoUrl = obj.master_url; 
+      for (let key in obj) {
+       const value = obj[key];
+       const lowerKey = String(key || keyName).toLowerCase();
+
+       if (typeof value === 'string' && value.startsWith('http')) {
+        const lowerValue = value.toLowerCase();
+        const looksLikeProfileAsset = lowerValue.includes('avatar') || lowerValue.includes('picasso-static');
+        const looksLikeVideo = lowerKey.includes('master') || lowerKey.includes('video') || lowerKey.includes('play') || lowerKey.includes('h264') || lowerKey.includes('h265') || lowerValue.includes('.mp4');
+        const looksLikeImage = lowerKey.includes('image') || lowerKey.includes('cover') || lowerKey.includes('url') || lowerValue.includes('.jpg') || lowerValue.includes('.jpeg') || lowerValue.includes('.png') || lowerValue.includes('.webp');
+
+        if (!looksLikeProfileAsset && looksLikeVideo && !finalVideoUrl) {
+         finalVideoUrl = value;
+        } else if (!looksLikeProfileAsset && looksLikeImage && !finalImages.includes(value)) {
+         finalImages.push(value);
+        }
+       } else if (value && typeof value === 'object') {
+        findMedia(value, key);
+       }
       }
-      // 고화질 사진 찾기
-      if (obj.url_size_large && obj.url_size_large.startsWith('http')) {
-       if (!finalImages.includes(obj.url_size_large)) finalImages.push(obj.url_size_large);
-      } else if (obj.url && obj.url.startsWith('http') && !obj.url.includes('avatar') && !obj.url.includes('picasso-static')) {
-       if (!finalImages.includes(obj.url)) finalImages.push(obj.url);
-      }
-      for (let key in obj) { findMedia(obj[key]); }
      }
      
      findMedia(result);
