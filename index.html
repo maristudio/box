@@ -20,7 +20,7 @@
 </head>
 <body class="text-gray-900 min-h-screen flex flex-col items-center py-16 px-4 relative">
 
-  <!-- 🔒 전체 화면 비밀번호 도어락 모달 (기본 비번: 1234) -->
+  <!-- 🔒 전체 화면 비밀번호 도어락 모달 -->
   <div id="doorlockModal" class="fixed inset-0 modal-bg bg-black/60 z-[999] flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm text-center border border-gray-100 fade-in">
       <span class="text-4xl mb-4 inline-block">🔒</span>
@@ -46,7 +46,7 @@
     </header>
 
     <div class="w-full max-w-7xl bg-gray-100 border border-gray-200 text-gray-700 text-xs font-bold py-2.5 rounded-xl text-center mb-6 shadow-sm">
-      📏 꿀팁: 크롬 사이드 패널에서 사용 시,  왼쪽 경계선을 잡고 왼쪽으로 쭉 당기면 4열 와이드 화면으로 넓게 쓰실 수 있습니다!
+      📏 꿀팁: 크롬 사이드 패널에서 사용 시, 왼쪽 경계선을 잡고 왼쪽으로 쭉 당기면 4열 와이드 화면으로 넓게 쓰실 수 있습니다!
     </div>
 
     <main class="w-full bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden relative">
@@ -157,18 +157,15 @@
           <div id="statusLogs" class="space-y-1"></div>
         </div>
 
-        <!-- 5단 분리 복사기 적용 결과창 (수정 완료!) -->
+        <!-- 5단 분리 복사기 -->
         <div id="resultBox" class="hidden p-6 bg-white border border-emerald-200 rounded-3xl shadow-lg space-y-6 animate-fade-in">
           <div class="flex items-center justify-between border-b border-gray-100 pb-4">
             <div class="flex items-center gap-2">
-              <span class="text-base font-bold text-emerald-600">수익형 대본 & 마케팅 가이드</span>
+              <span class="text-sm font-bold text-emerald-600">수익형 대본 & 마케팅 가이드</span>
               <span id="engineBadge" class="text-[10px] bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold font-mono border border-blue-200"></span>
             </div>
-            <!-- 전체 복사기 유지 -->
             <button onclick="copyToClipboard()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-4 py-3 rounded-xl transition shadow-md">📋 전체 내용 한방에 복사</button>
           </div>
-          
-          <!-- 📦 5단 분리형 카드 컨테이너 -->
           <div id="geminiOutputContainer" class="space-y-6 w-full"></div>
         </div>
       </div>
@@ -203,8 +200,6 @@
 
   <script>
     const MY_PASSWORD = "1234";
-
-    // AI 원문 데이터 저장 전용 글로벌 변수 (한방에 복사용)
     window.currentFullOutput = "";
 
     function sanitizeFilename(name) {
@@ -236,6 +231,7 @@
       }
     }
 
+    // 비밀번호 체크
     function submitPassword() {
       const inputPass = document.getElementById('sitePassInput').value.trim();
       if (inputPass === MY_PASSWORD) {
@@ -290,20 +286,18 @@
       }
     }
 
-    // 📋 전체 한방에 복사기 (보안 검문 철벽 우회 적용)
     function copyToClipboard() {
-      if (!window.currentFullOutput) return alert("복사할 내용이 없습니다!");
-      executeCopyProcess(window.currentFullOutput, "📋 전체 대본 및 마케팅 패키지가 복사되었습니다!");
+      const outputText = window.currentFullOutput;
+      if (!outputText) return alert("복사할 내용이 없습니다!");
+      executeCopyProcess(outputText, "📋 전체 대본 및 마케팅 패키지가 복사되었습니다!");
     }
 
-    // 📋 5단 개별 복사용 전용 실행기 (자유롭게 복사)
     function copySingleSection(elementId, sectionName) {
       const outputText = document.getElementById(elementId).innerText;
       if (!outputText) return alert("복사할 내용이 없습니다!");
       executeCopyProcess(outputText, `📋 [${sectionName}] 대본이 복사되었습니다!`);
     }
 
-    // 보안 검문 우회 하이브리드 복사 장치 (어디서나 100% 작동)
     function executeCopyProcess(text, successMessage) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
@@ -326,7 +320,7 @@
       tempTextArea.select();
       try {
         const successful = document.execCommand('copy');
-        if (successful) alert(successMessage + " (CORS 우회)");
+        if (successful) alert(successMessage + " (보안 우회)");
         else alert("복사 실패");
       } catch (err) {
         alert("에러: " + err);
@@ -334,10 +328,9 @@
       document.body.removeChild(tempTextArea);
     }
 
-    // 📦 5단 분리 파싱 렌더링 장치 (수정 완료!)
+    // 📦 5단 분리 파싱
     function parseAndRenderOutput(text) {
-      window.currentFullOutput = text; // 전체 복사용 백업
-
+      window.currentFullOutput = text;
       const sections = {
         script1: { title: "🚨 대본 1: 너만 몰랐네형 (비밀 폭로/호기심)", tag: "[태그_대본1]" },
         script2: { title: "🍳 대본 2: 문제 해결형 (일상 불편/공감)", tag: "[태그_대본2]" },
@@ -347,20 +340,17 @@
       };
 
       const container = document.getElementById('geminiOutputContainer');
-      container.innerHTML = ""; // 기존 비우기
+      container.innerHTML = "";
 
       const tagsInOrder = ["script1", "script2", "script3", "cardnews", "comment"];
 
       tagsInOrder.forEach((key, index) => {
         const tag = sections[key].tag;
         let content = "";
-
         const tagIndex = text.indexOf(tag);
         if (tagIndex !== -1) {
           const start = tagIndex + tag.length;
           let end = text.length;
-
-          // 다음으로 오는 태그가 있다면 그 앞에서 자름
           const nextTags = tagsInOrder.slice(index + 1).map(k => sections[k].tag);
           for (const nextTag of nextTags) {
             const nextTagIndex = text.indexOf(nextTag);
@@ -372,7 +362,7 @@
         }
 
         if (!content) {
-          content = "데이터 분석에 일부 실패했거나 항목이 누락되었습니다. 위의 [전체 내용 복사] 버튼을 사용해 대본을 수동으로 검토해 주세요.";
+          content = "데이터 분석에 일부 실패했거나 항목이 누락되었습니다. 위의 [전체 내용 복사] 버튼을 사용해 주세요.";
         }
 
         const cardId = `copy_box_${key}`;
@@ -380,7 +370,6 @@
           <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 flex flex-col space-y-3 shadow-sm hover:shadow transition duration-150">
             <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-1">
               <span class="text-sm font-extrabold text-gray-800">${sections[key].title}</span>
-              <!-- 개별 복사 버튼 -->
               <button onclick="copySingleSection('${cardId}', '${sections[key].title}')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-xs px-3.5 py-2 rounded-xl border border-emerald-200 transition">📋 복사</button>
             </div>
             <pre id="${cardId}" class="text-gray-800 text-sm whitespace-pre-wrap leading-relaxed font-sans font-semibold bg-white p-4 rounded-xl border border-gray-100 max-h-[300px] overflow-y-auto">${content}</pre>
@@ -403,10 +392,8 @@
         const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = blobUrl;
-        
         const safeTitle = rawTitle ? sanitizeFilename(decodeURIComponent(rawTitle)) : Date.now();
         a.download = `[${platformName}]_${safeTitle}.mp4`;
-        
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -420,52 +407,38 @@
 
     async function runSmartDownload() {
       const linkInput = document.getElementById('videoLink').value.trim();
-      if(!linkInput) { alert("링크를 입력해주세요!"); return; }
-
+      if(!linkInput) return alert("링크를 입력해주세요!");
       const btn = document.getElementById('downloadBtn');
       const originalHTML = btn.innerHTML;
-       
-      alert("🚀 영상을 분석하고 다운로드를 시도합니다.");
-      btn.innerHTML = "<div class='spinner'></div> <span>영상을 가져오는 중...</span>";
+      btn.innerHTML = "<div class='spinner'></div> <span>가져오는 중...</span>";
       btn.classList.add('opacity-80', 'cursor-not-allowed');
 
       try {
         if(linkInput.includes('tiktok.com')) {
           const url = `https://www.tikwm.com/api/?url=${encodeURIComponent(linkInput)}`;
           const response = await fetch(url);
-          if(!response.ok) throw new Error("틱톡 접속 불가");
           const result = await response.json();
-           
-          if(result && result.data && result.data.play) {
+          if(result.data && result.data.play) {
             await forceDownloadWithFallback(result.data.play, "틱톡", result.data.title || "개별다운로드");
           } else { throw new Error("영상을 찾을 수 없습니다."); }
-        } 
-        else {
+        } else {
           const apiKey = localStorage.getItem('myRapidKey');
-          if(!apiKey) { throw new Error("⚙️ RapidAPI 키 누락"); }
-
-          let noteId = "";
-          const match = linkInput.match(/[0-9a-fA-F]{24}/); 
-          if(match) { noteId = match[0]; } else { noteId = linkInput; }
-
+          if(!apiKey) throw new Error("⚙️ RapidAPI 키 누락");
+          let noteId = linkInput.match(/[0-9a-fA-F]{24}/) ? linkInput.match(/[0-9a-fA-F]{24}/)[0] : linkInput;
           const url = `https://xiaohongshu-all-api.p.rapidapi.com/api/xiaohongshu/get-note-detail/v5?noteId=${noteId}`;
-          const options = { method: 'GET', headers: { 'x-rapidapi-host': 'xiaohongshu-all-api.p.rapidapi.com', 'x-rapidapi-key': apiKey } };
-          const response = await fetch(url, options);
-          const result = await response.json();
-
+          const res = await fetch(url, { headers: { 'x-rapidapi-host': 'xiaohongshu-all-api.p.rapidapi.com', 'x-rapidapi-key': apiKey } });
+          const result = await res.json();
           let finalVideoUrl = null;
-          let finalTitle = "샤오홍슈수동다운로드";
+          let finalTitle = "샤오홍슈수동";
           function findVideo(obj) {
             if (!obj || typeof obj !== 'object') return;
-            if (obj.master_url && typeof obj.master_url === 'string' && obj.master_url.startsWith('http')) { finalVideoUrl = obj.master_url; return; }
+            if (obj.master_url && obj.master_url.startsWith('http')) { finalVideoUrl = obj.master_url; return; }
             for (let key in obj) { if (finalVideoUrl) return; findVideo(obj[key]); }
           }
           findVideo(result);
           if(result.title) finalTitle = result.title;
-
-          if(finalVideoUrl) { 
-            await forceDownloadWithFallback(finalVideoUrl, "샤오홍슈", finalTitle);
-          } else { throw new Error("영상 데이터를 찾을 수 없습니다."); }
+          if(finalVideoUrl) await forceDownloadWithFallback(finalVideoUrl, "샤오홍슈", finalTitle);
+          else throw new Error("비디오 리소스를 찾지 못했습니다.");
         }
       } catch (error) {
         alert("🚨 에러: " + error.message);
@@ -537,7 +510,6 @@
       throw new Error(`구글 서버와 모델명을 모두 자동 탐색했으나 실패했습니다. (최종 오류: ${lastError})`);
     }
 
-    // 🪄 [3대 대본 가공 + Before & After 카드뉴스 동시 탑재 정밀 프롬프트]
     function getInstructionPrompt() {
       const partnerLink = localStorage.getItem('myPartnerLink') || "설정창에서 등록한 고유 제휴 주소";
       
@@ -551,17 +523,17 @@
       [태그_대본1]
       🚨 대본 1: [너만 몰랐네형] (비밀 폭로 및 후킹 유발 컨셉)
       - "아직도 이거 모르는 사람 없죠?" 등으로 오프닝을 열며 결핍을 자극하는 문체.
-      - 캡컷에 복사해 넣기 좋게 3초 단위 문장 줄바꿈으로 정제해줘.
+      - 캡컷에 복사해 넣기 좋게 3초 단위 리듬감 있는 문장 줄바꿈으로 정제해줘.
       
       [태그_대본2]
       🍳 대본 2: [문제 해결형] (일상의 불편함을 콕 찔러서 공감하는 컨셉)
       - "설거지하거나 청소할 때 OO 때문에 짜증 폭발하셨죠?" 등으로 고질적 불편함을 설명한 뒤 제품으로 해결하는 문체.
-      - 캡컷에 복사해 넣기 좋게 3초 단위 문장 줄바꿈으로 정제해줘.
+      - 캡컷에 복사해 넣기 좋게 3초 단위 리듬감 있는 문장 줄바꿈으로 정제해줘.
       
       [태그_대본3]
       🛒 대본 3: [솔직 리뷰형] (광고 빼고 내돈내산 100% 진정성 컨셉)
       - 친한 친구가 직접 돈 내고 써보고 조곤조곤 추천하는 정직한 신뢰감 톤앤매너 문체.
-      - 캡컷에 복사해 넣기 좋게 3초 단위 문장 줄바꿈으로 정제해줘.
+      - 캡컷에 복사해 넣기 좋게 3초 단위 리듬감 있는 문장 줄바꿈으로 정제해줘.
 
       [태그_카드뉴스]
       📸 인스타/틱톡 Before & After 가상 스테이징 대본 (5장 슬라이드용)
@@ -587,6 +559,7 @@
     async function runGeminiVideoTranslation() {
       const apiKey = localStorage.getItem('myGeminiKey');
       if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
+       
       const fileInput = document.getElementById('videoUpload');
       if(!fileInput.files || fileInput.files.length === 0) return alert("다운로드받은 영상을 먼저 선택해 주세요!");
 
@@ -612,13 +585,8 @@
 
         try {
           const result = await tryGeminiWithFallback(apiKey, base64Video, file.type, prompt);
-          
-          // 💡 복사 버튼용 전체 원본 텍스트 저장
           window.currentFullOutput = result.text;
-
-          // 💡 5단 분리 파싱 렌더링 호출!
           parseAndRenderOutput(result.text);
-
           engineBadge.innerText = `엔진: ${result.engine}`;
           engineBadge.classList.remove('hidden');
           resultBox.classList.remove('hidden');
@@ -659,7 +627,7 @@
         let finalKeyword = keyword;
         const geminiApiKey = localStorage.getItem('myGeminiKey');
 
-        // 💡 1. 번역 매직
+        // 💡 1. 번역 매직: 샤오홍슈이고 한국어 키워드가 들어왔을 때 자동 중국어 번역 실행!
         if (platform === "xhs" && isKorean(keyword)) {
           if (!geminiApiKey) {
             logStatus(`⚠️ 제미니 무료 키가 없어 한국어 원문으로 직접 검색을 시도합니다.`, 'try');
@@ -675,7 +643,7 @@
               const transData = await res.json();
               if (transData.candidates && transData.candidates[0].content.parts[0]) {
                 const translatedWord = transData.candidates[0].content.parts[0].text.trim().replace(/["'‘“’\"]/g, "");
-                logStatus(`🎉 [번역 성공] "${keyword}" ➔ "${translatedWord}"`, 'success');
+                logStatus::(`🎉 [번역 성공] "${keyword}" ➔ "${translatedWord}"`, 'success');
                 finalKeyword = translatedWord;
               }
             } catch (e) {
@@ -695,6 +663,7 @@
           if (Array.isArray(result.data)) videoList = result.data;
           else if (result.data && Array.isArray(result.data.videos)) videoList = result.data.videos;
         } else {
+          // 샤오홍슈 수량 20개NOTES 검색
           const rapidApiKey = localStorage.getItem('myRapidKey') || "";
           if (!rapidApiKey) throw new Error("⚙️ 설정창에서 샤오홍슈용 RapidAPI 키를 등록해 주세요!");
           
@@ -703,19 +672,36 @@
             throw new Error("⚠️ RapidAPI Key에 오류 한글이 섞여 있습니다! 설정창(⚙️)을 확인해 주세요.");
           }
           
-          logStatus(`📥 [샤오홍슈 수집] "${finalKeyword}" 키워드로 20개 노트를 수집하는 중...`);
+          logStatus(`📥 [샤오홍슈 수집] "${finalKeyword}" 키워드로 수집 가동 중...`);
           const res = await fetch(`https://xiaohongshu-all-api.p.rapidapi.com/api/xiaohongshu/search-note/v2?keyword=${encodeURIComponent(finalKeyword)}&page=1&pageSize=20`, {
             headers: {
               'x-rapidapi-host': 'xiaohongshu-all-api.p.rapidapi.com',
               'x-rapidapi-key': asciiOnlyKey
             }
           });
+          
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`RapidAPI 서버 통신 거절 (${res.status}): ${errorText}`);
+          }
+          
           const result = await res.json();
-          videoList = result.data?.notes || result.data || [];
+          
+          // 💡 [초정밀 자동 목록 탐지 장치] notes, items, list 혹은 data 자체 배열을 추적하여 버그를 영구적 해결!
+          let rawList = result.data?.notes || result.data?.items || result.data?.list || result.data || [];
+          if (!Array.isArray(rawList) && rawList && typeof rawList === 'object') {
+            for (let key in rawList) {
+              if (Array.isArray(rawList[key])) {
+                rawList = rawList[key];
+                break;
+              }
+            }
+          }
+          videoList = Array.isArray(rawList) ? rawList : [];
         }
 
         if (videoList.length === 0) {
-          throw new Error("영상을 단 한 개도 가져오지 못했습니다. 키워드나 수집 필터를 다듬어 보세요!");
+          throw new Error("영상을 단 한 개도 가져오지 못했습니다. ⚙️ 설정창에서 Gemini API Key가 잘 등록되어 중국어 번역이 되었는지 확인하시거나 키워드를 다듬어 보세요!");
         }
 
         // 💡 3. 날짜 필터 (샤오홍슈는 날짜 필터 패스하여 0개 필터링 버그 예방!)
@@ -730,10 +716,6 @@
           }
         }
 
-        if (videoList.length === 0) {
-          throw new Error("선택하신 기간 내에 조건이 일치하는 쇼츠가 없습니다.");
-        }
-
         // 💡 4. 정렬 필터 작동
         if (platform === "tiktok") {
           if (sortFilter === "likes") {
@@ -746,6 +728,7 @@
             videoList.sort((a, b) => (b.create_time || 0) - (a.create_time || 0));
           }
         } else {
+          // 샤오홍슈 정렬 필터 매핑
           if (sortFilter === "likes") {
             videoList.sort((a, b) => (b.likes || b.liked_count || b.likedCount || 0) - (a.likes || a.liked_count || a.likedCount || 0));
           } else if (sortFilter === "views") {
@@ -779,8 +762,8 @@
               titleRaw: item.title || "수동영상"
             };
           } else {
-            const coverUrl = item.cover?.url || item.cover_url || "https://images.unsplash.com/photo-1542291026-7eec264c27ff";
-            const likesVal = item.likes || item.liked_count || item.collects || 0;
+            const coverUrl = item.cover?.url || item.cover_url || item.image || "https://images.unsplash.com/photo-1542291026-7eec264c27ff";
+            const likesVal = item.likes || item.liked_count || item.likedCount || 0;
             const likesCount = likesVal >= 10000 ? (likesVal / 10000).toFixed(1) + "만" : likesVal;
             const commentsVal = item.comments || item.comments_count || 0;
             const authorName = item.user?.nickname || item.author_name || "xhs_creator";
@@ -868,13 +851,8 @@
           const base64Video = reader.result.split(',')[1];
           try {
             const result = await tryGeminiWithFallback(apiKey, base64Video, blob.type, getInstructionPrompt());
-            
-            // 💡 전체 복사용 저장
             window.currentFullOutput = result.text;
-
-            // 💡 5단 분리 렌더링 시작!
             parseAndRenderOutput(result.text);
-
             document.getElementById('engineBadge').innerText = `엔진: ${result.engine}`;
             document.getElementById('engineBadge').classList.remove('hidden');
             resultBox.classList.remove('hidden');
