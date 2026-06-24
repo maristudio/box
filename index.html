@@ -1753,12 +1753,14 @@ ${finalFormat}`;
       await forceDownloadWithFallback(result.data.play, "틱톡", result.data.title || "개별다운로드");
      } else { throw new Error("영상을 찾을 수 없습니다."); }
     } else {
-     let noteId = linkInput.match(/[0-9a-fA-F]{24}/) ? linkInput.match(/[0-9a-fA-F]{24}/)[0] : linkInput;
+     const extractedUrlMatch = linkInput.match(/https?:\/\/[^\s]+/);
+     const cleanSourceUrl = extractedUrlMatch ? extractedUrlMatch[0] : linkInput;
+     let noteId = cleanSourceUrl.match(/[0-9a-fA-F]{24}/) ? cleanSourceUrl.match(/[0-9a-fA-F]{24}/)[0] : cleanSourceUrl;
      
      // Vercel 서버리스 프록시를 거쳐 호출합니다. 브라우저 직접 RapidAPI 호출은 CORS/502가 자주 납니다.
      const apiKey = safeStorage.getLocal('myRapidKey');
      const headers = apiKey ? { 'x-client-rapidapi-key': apiKey } : {};
-     const url = `/api/xhs-detail?url=${encodeURIComponent(linkInput)}&noteId=${encodeURIComponent(noteId)}`;
+     const url = `/api/xhs-detail?url=${encodeURIComponent(cleanSourceUrl)}&noteId=${encodeURIComponent(noteId)}`;
      const res = await fetch(url, {
       method: 'GET',
       headers
@@ -1766,7 +1768,8 @@ ${finalFormat}`;
 
      const proxyResult = await res.json().catch(() => ({}));
      if (!res.ok) {
-      throw new Error(proxyResult.error || `RapidAPI 프록시 응답 실패 (Status: ${res.status}). Vercel 환경변수 RAPIDAPI_KEY 또는 설정창 키를 확인하세요.`);
+      const upstreamDetail = proxyResult.status ? ` (RapidAPI Status: ${proxyResult.status})` : "";
+      throw new Error((proxyResult.error || `RapidAPI 프록시 응답 실패 (Status: ${res.status})`) + upstreamDetail);
      }
 
      if (!proxyResult.ok) {

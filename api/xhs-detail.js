@@ -59,7 +59,7 @@ module.exports = async function handler(req, res) {
       return res.status(upstream.status).json({
         ok: false,
         status: upstream.status,
-        error: data?.message || data?.msg || data?.error || "Rednote HD Video API request failed",
+        error: data?.message || data?.msg || data?.error || `Rednote HD Video API request failed (Status: ${upstream.status})`,
         data,
       });
     }
