@@ -94,11 +94,17 @@
       <div class="flex-1">
        <h3 class="font-semibold text-lg text-green-900 flex items-center gap-2">초고속 한국어 대본 정제</h3>
        <p class="text-sm text-green-700 mb-3">다운받은 MP4 영상을 아래에 올리세요. AI가 자막과 카피 대본을 완전히 새로 정제해 줍니다.</p>
-       <label for="videoUpload" class="file-drop-area w-full flex flex-col items-center justify-center px-4 py-6 rounded-xl bg-white mb-4">
+       <label id="videoDropArea" for="videoUpload" ondragover="handleVideoDragOver(event)" ondragleave="handleVideoDragLeave(event)" ondrop="handleVideoDrop(event)" class="file-drop-area w-full flex flex-col items-center justify-center px-4 py-6 rounded-xl bg-white mb-3">
         <span class="text-2xl mb-2">📁</span>
-        <span id="fileNameDisplay" class="text-sm text-gray-500 font-medium">여기를 클릭해서 MP4 영상을 선택하세요</span>
+        <span id="fileNameDisplay" class="text-sm text-gray-500 font-medium">MP4/WebM 파일을 클릭 선택하거나 여기에 끌어다 놓으세요</span>
         <input type="file" id="videoUpload" accept="video/mp4,video/webm" class="hidden" onchange="updateFileName(this)">
        </label>
+       <div class="flex gap-2 mb-3">
+        <button onclick="document.getElementById('videoUpload').click()" class="flex-1 bg-white hover:bg-green-50 text-green-700 border border-green-200 px-4 py-2.5 rounded-xl text-xs font-extrabold transition">파일 선택</button>
+        <button onclick="document.getElementById('videoFolderUpload').click()" class="flex-1 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2.5 rounded-xl text-xs font-extrabold transition">폴더에서 찾기</button>
+       </div>
+       <input type="file" id="videoFolderUpload" accept="video/mp4,video/webm" webkitdirectory directory multiple class="hidden" onchange="handleVideoFolderSelect(this)">
+       <div id="folderVideoList" class="hidden mb-4 bg-white border border-gray-200 rounded-xl p-3 max-h-40 overflow-y-auto space-y-2"></div>
        <button id="translateBtn" onclick="runGeminiVideoTranslation()" class="w-full bg-green-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-green-700 transition shadow-sm text-sm flex items-center justify-center gap-2">
         <span>🪄 AI 한국어 대본 정제</span>
        </button>
@@ -109,7 +115,7 @@
     <!-- 🔒 [신설] 2단계 선택적 콘텐츠 생성 영역 -->
     <div id="stage2Area" class="hidden space-y-6 pt-8 border-t border-gray-200 fade-in">
       
-     <!-- 중국 소싱 및 채널 적합성 카드 -->
+      <!-- 상품 레퍼런스 및 채널 적합성 카드 -->
      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
        
       <!-- 📊 인스타 vs 틱톡 적합성 리포트 카드 -->
@@ -139,25 +145,37 @@
        <p id="channelFitReason" class="text-xs text-gray-600 leading-relaxed font-semibold bg-white/60 p-3.5 rounded-xl border border-indigo-50/50 whitespace-pre-wrap"></p>
       </div>
        
-      <!-- 🇨🇳 중국 소싱 원클릭 연동 카드 -->
+      <!-- 🔎 상품 레퍼런스 빠른 검색 카드 -->
       <div class="bg-amber-50 p-6 rounded-2xl border border-amber-100 flex flex-col justify-between space-y-4">
        <div>
         <h3 class="font-bold text-gray-800 text-sm flex items-center gap-1.5 mb-2">
-         <span>🇨🇳 중국 도매처 원클릭 소싱 매칭</span>
+         <span>🔎 상품 레퍼런스 빠른 검색</span>
         </h3>
         <p class="text-xs text-amber-800 leading-relaxed mb-3">
-         AI가 영상에서 추출한 핵심 중국어 검색어로 타오바오와 1688에서 동일/도매 상품을 즉시 찾을 수 있습니다.
+         AI가 영상에서 추정한 상품 키워드로 샤오홍슈, 더우인, 국내 쇼핑몰, 이미지 검색을 빠르게 열 수 있습니다.
         </p>
         <div class="bg-white px-4 py-2.5 rounded-xl border border-amber-200 font-mono font-bold text-xs text-gray-800 flex items-center justify-between">
-         <span>소싱 키워드: <span id="sourcingKeyword" class="text-amber-700 font-bold">추출 중...</span></span>
+         <span>상품 검색 키워드: <span id="sourcingKeyword" class="text-amber-700 font-bold">추출 중...</span></span>
         </div>
        </div>
-       <div class="grid grid-cols-2 gap-3">
-        <button onclick="searchTaobaoDirect(document.getElementById('sourcingKeyword').innerText)" class="py-3 text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-xl transition text-center shadow-sm flex items-center justify-center gap-1">
-         <span>🇨🇳 타오바오 검색</span>
+       <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <button onclick="searchXhsReference(document.getElementById('sourcingKeyword').innerText)" class="py-3 text-xs font-bold text-white bg-red-500 hover:bg-red-600 rounded-xl transition text-center shadow-sm flex items-center justify-center gap-1">
+         <span>샤오홍슈</span>
         </button>
-        <button onclick="search1688Direct(document.getElementById('sourcingKeyword').innerText)" class="py-3 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition text-center shadow-sm flex items-center justify-center gap-1">
-         <span>📦 1688 도매 검색</span>
+        <button onclick="searchDouyinReference(document.getElementById('sourcingKeyword').innerText)" class="py-3 text-xs font-bold text-white bg-black hover:bg-gray-800 rounded-xl transition text-center shadow-sm flex items-center justify-center gap-1">
+         <span>더우인</span>
+        </button>
+        <button onclick="searchNaverShopping(document.getElementById('sourcingKeyword').innerText)" class="py-3 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition text-center shadow-sm flex items-center justify-center gap-1">
+         <span>네이버쇼핑</span>
+        </button>
+        <button onclick="searchCoupang(document.getElementById('sourcingKeyword').innerText)" class="py-3 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition text-center shadow-sm flex items-center justify-center gap-1">
+         <span>쿠팡</span>
+        </button>
+        <button onclick="searchGoogleImages(document.getElementById('sourcingKeyword').innerText)" class="py-3 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition text-center shadow-sm flex items-center justify-center gap-1">
+         <span>구글이미지</span>
+        </button>
+        <button onclick="searchAliExpress(document.getElementById('sourcingKeyword').innerText)" class="py-3 text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-xl transition text-center shadow-sm flex items-center justify-center gap-1">
+         <span>알리</span>
         </button>
        </div>
       </div>
@@ -209,6 +227,39 @@
      </div>
       
     </div>
+
+    <!-- 카드뉴스 제작 보드 -->
+    <div id="cardNewsStudio" class="hidden space-y-5 pt-8 border-t border-gray-200">
+     <div class="flex items-center justify-between">
+      <div>
+       <h3 class="font-extrabold text-gray-900 text-lg">인스타 카드뉴스 제작 보드</h3>
+       <p class="text-xs text-gray-500 font-semibold mt-1">영상 장면을 캡처하고 Gemini 카드뉴스 문구를 얹어 1080x1350 JPG로 저장합니다.</p>
+      </div>
+      <button onclick="downloadAllCardJpgs()" class="bg-black text-white px-4 py-2.5 rounded-xl text-xs font-extrabold hover:bg-gray-800 transition">JPG 5장 다운로드</button>
+     </div>
+
+     <div class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
+      <div class="space-y-3">
+       <video id="cardVideoPreview" controls playsinline class="w-full rounded-2xl bg-black border border-gray-200"></video>
+       <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+         <span class="text-xs font-extrabold text-gray-700">교체할 카드</span>
+         <div id="cardSlotButtons" class="flex gap-1">
+          <button onclick="selectCardSlot(0)" class="card-slot-btn bg-black text-white text-xs font-bold px-3 py-1.5 rounded-lg">1</button>
+          <button onclick="selectCardSlot(1)" class="card-slot-btn bg-white text-gray-700 border border-gray-200 text-xs font-bold px-3 py-1.5 rounded-lg">2</button>
+          <button onclick="selectCardSlot(2)" class="card-slot-btn bg-white text-gray-700 border border-gray-200 text-xs font-bold px-3 py-1.5 rounded-lg">3</button>
+          <button onclick="selectCardSlot(3)" class="card-slot-btn bg-white text-gray-700 border border-gray-200 text-xs font-bold px-3 py-1.5 rounded-lg">4</button>
+          <button onclick="selectCardSlot(4)" class="card-slot-btn bg-white text-gray-700 border border-gray-200 text-xs font-bold px-3 py-1.5 rounded-lg">5</button>
+         </div>
+        </div>
+        <button onclick="captureCurrentFrameToCard()" class="w-full bg-emerald-600 text-white py-3 rounded-xl text-xs font-extrabold hover:bg-emerald-700 transition">현재 장면 캡처/교체</button>
+        <p class="text-[11px] text-gray-500 font-semibold leading-relaxed">문구는 2단계 카드뉴스 생성 후 자동 배치됩니다. 사진이 문구와 안 맞으면 카드 번호를 고르고 다시 캡처하세요.</p>
+       </div>
+      </div>
+
+      <div id="cardPreviewGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+     </div>
+    </div>
    </div>
 
    <!-- 탭 2 -->
@@ -244,12 +295,10 @@
      <button onclick="discoverTrends()" id="searchTrendBtn" class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-emerald-700 transition shadow-md whitespace-nowrap">발굴하기 🔍</button>
     </div>
 
-    <!-- 4대 쇼핑 퀵-태그 버튼 -->
-    <div class="flex gap-2 flex-wrap pb-2 border-b border-gray-100">
-     <button onclick="triggerQuickTag('쿠팡꿀템')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-3.5 py-2 rounded-full transition border border-gray-200">📦 쿠팡 꿀템</button>
-     <button onclick="triggerQuickTag('삶의질상승')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-3.5 py-2 rounded-full transition border border-gray-200">🏠 삶의 질 상승</button>
-     <button onclick="triggerQuickTag('다이소추천')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-3.5 py-2 rounded-full transition border border-gray-200">🛒 다이소 추천</button>
-     <button onclick="triggerQuickTag('주방꿀템')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-3.5 py-2 rounded-full transition border border-gray-200">🍳 주방/생활 리빙</button>
+    <!-- 쇼핑 퀵-태그 버튼 -->
+    <div class="flex gap-2 flex-wrap pb-2 border-b border-gray-100 items-center">
+     <div id="quickTagsContainer" class="flex gap-2 flex-wrap"></div>
+     <button onclick="toggleTagManager()" class="bg-black hover:bg-gray-800 text-white font-bold text-xs px-3.5 py-2 rounded-full transition border border-black">+ 태그 관리</button>
     </div>
 
     <!-- 결과 창 -->
@@ -272,7 +321,7 @@
      <span class="text-lg">💡</span>
      <div>
       <strong class="font-bold">AI 이미지 상품 분석기 (100% 무료 Gemini API 활용)</strong><br>
-      제품 사진이나 쇼츠 캡처 이미지를 아래에 올리시면, AI가 상품 정보를 식별하고 각 쇼핑몰(쿠팡, 타오바오, 아마존)에서 쓰기 좋은 최적의 다국어 키워드와 핵심 소구점을 분석해 드립니다.
+      제품 사진이나 쇼츠 캡처 이미지를 아래에 올리시면, AI가 상품 정보를 식별하고 쿠팡/네이버/샤오홍슈/더우인/알리에서 바로 검색하기 좋은 키워드를 뽑아줍니다.
      </div>
     </div>
 
@@ -303,29 +352,33 @@
 
       <!-- 2. 다국어 키워드 보드 -->
       <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
-       <h5 class="text-xs font-bold text-gray-400">쇼핑몰 검색용 최적 키워드</h5>
+       <h5 class="text-xs font-bold text-gray-400">상품 레퍼런스 검색용 최적 키워드</h5>
         
        <div class="space-y-2">
         <!-- 쿠팡 (한글) -->
         <div class="flex items-center gap-3">
          <span class="w-24 text-[10px] bg-red-50 text-red-600 font-bold px-2 py-1 rounded text-center whitespace-nowrap">쿠팡 (KOR)</span>
          <span id="kwCoupang" class="flex-1 text-xs font-semibold truncate bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-800 font-sans"></span>
+         <button onclick="searchCoupang(document.getElementById('kwCoupang').innerText)" class="bg-red-50 hover:bg-red-100 text-red-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-red-200 transition whitespace-nowrap">쿠팡</button>
+         <button onclick="searchNaverShopping(document.getElementById('kwCoupang').innerText)" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-emerald-200 transition whitespace-nowrap">네이버</button>
          <button onclick="copySingleSection('kwCoupang', '쿠팡 키워드')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-blue-200 transition whitespace-nowrap">📋 복사</button>
         </div>
          
-        <!-- 타오바오/1688 (중국어) -->
+        <!-- 샤오홍슈/더우인 (중국 플랫폼) -->
         <div class="flex items-center gap-3">
-         <span class="w-24 text-[10px] bg-orange-50 text-orange-600 font-bold px-2 py-1 rounded text-center whitespace-nowrap">타오바오 (CHN)</span>
-         <span id="kwTaobao" class="flex-1 text-xs font-semibold truncate bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-800 font-sans"></span>
-         <button onclick="searchTaobaoDirect(document.getElementById('kwTaobao').innerText)" class="bg-orange-50 hover:bg-orange-100 text-orange-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-orange-200 transition whitespace-nowrap">🇨🇳 타오바오</button>
-         <button onclick="search1688Direct(document.getElementById('kwTaobao').innerText)" class="bg-amber-50 hover:bg-amber-100 text-amber-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-amber-200 transition whitespace-nowrap">📦 1688</button>
-         <button onclick="copySingleSection('kwTaobao', '중국어 키워드')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-blue-200 transition whitespace-nowrap">📋 복사</button>
+         <span class="w-24 text-[10px] bg-pink-50 text-pink-600 font-bold px-2 py-1 rounded text-center whitespace-nowrap">중국 앱</span>
+         <span id="kwChinaReference" class="flex-1 text-xs font-semibold truncate bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-800 font-sans"></span>
+         <button onclick="searchXhsReference(document.getElementById('kwChinaReference').innerText)" class="bg-pink-50 hover:bg-pink-100 text-pink-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-pink-200 transition whitespace-nowrap">샤오홍슈</button>
+         <button onclick="searchDouyinReference(document.getElementById('kwChinaReference').innerText)" class="bg-gray-900 hover:bg-black text-white font-extrabold text-xs px-3 py-2 rounded-xl border border-gray-900 transition whitespace-nowrap">더우인</button>
+         <button onclick="copySingleSection('kwChinaReference', '중국 앱 키워드')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-blue-200 transition whitespace-nowrap">📋 복사</button>
         </div>
          
-        <!-- 아마존/알리 (영어) -->
+        <!-- 알리/구글 이미지 (영어) -->
         <div class="flex items-center gap-3">
-         <span class="w-24 text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-1 rounded text-center whitespace-nowrap">알리/아마존 (ENG)</span>
+         <span class="w-24 text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-1 rounded text-center whitespace-nowrap">알리/이미지</span>
          <span id="kwEnglish" class="flex-1 text-xs font-semibold truncate bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-800 font-sans"></span>
+         <button onclick="searchAliExpress(document.getElementById('kwEnglish').innerText)" class="bg-orange-50 hover:bg-orange-100 text-orange-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-orange-200 transition whitespace-nowrap">알리</button>
+         <button onclick="searchGoogleImages(document.getElementById('kwEnglish').innerText)" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-blue-200 transition whitespace-nowrap">이미지</button>
          <button onclick="copySingleSection('kwEnglish', '영어 키워드')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-blue-200 transition whitespace-nowrap">📋 복사</button>
         </div>
        </div>
@@ -369,6 +422,22 @@
     </div>
    </div>
   </main>
+
+  <!-- 태그 관리 모달 -->
+  <div id="tagManagerModal" class="hidden fixed inset-0 modal-bg bg-black/30 z-[120] flex items-center justify-center p-4">
+   <div class="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4">퀵 태그 관리</h2>
+    <div class="grid grid-cols-[80px_1fr_auto] gap-2 mb-4">
+     <input type="text" id="newTagIcon" maxlength="4" placeholder="아이콘" class="px-3 py-2 rounded-xl border border-gray-300 text-sm font-bold">
+     <input type="text" id="newTagLabel" placeholder="예: 차량용품" class="px-3 py-2 rounded-xl border border-gray-300 text-sm font-bold">
+     <button onclick="addQuickTag()" class="bg-black text-white px-4 py-2 rounded-xl text-xs font-bold">추가</button>
+    </div>
+    <div id="tagManagerList" class="space-y-2 max-h-[320px] overflow-y-auto"></div>
+    <div class="mt-5 flex justify-end">
+     <button onclick="toggleTagManager()" class="px-5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold">닫기</button>
+    </div>
+   </div>
+  </div>
 
   <!-- 설정 모달 -->
   <div id="settingsModal" class="hidden fixed inset-0 modal-bg bg-black/30 z-[100] flex items-center justify-center">
@@ -458,6 +527,7 @@
    if(safeStorage.getLocal('myGeminiKey')) document.getElementById('geminiKey').value = safeStorage.getLocal('myGeminiKey');
    if(safeStorage.getLocal('myPartnerLink')) document.getElementById('partnerLink').value = safeStorage.getLocal('myPartnerLink');
    document.getElementById('allowRapidFallback').checked = safeStorage.getLocal('allowRapidFallback') === 'true';
+   renderQuickTags();
   };
 
   function checkPassword() {
@@ -555,9 +625,240 @@
   function updateFileName(input) {
    const display = document.getElementById('fileNameDisplay');
    if(input.files && input.files[0]) {
-    display.innerHTML = `<span class='text-green-600 font-bold'>선택됨: ${input.files[0].name}</span>`;
+    const sizeMb = (input.files[0].size / 1024 / 1024).toFixed(1);
+    display.innerHTML = `<span class='text-green-600 font-bold'>선택됨: ${input.files[0].name} (${sizeMb}MB)</span>`;
+    if (input.id === 'videoUpload') setupCardVideoPreview(input.files[0]);
    } else {
-    display.innerText = "여기를 클릭해서 MP4 영상을 선택하세요";
+    display.innerText = "MP4/WebM 파일을 클릭 선택하거나 여기에 끌어다 놓으세요";
+   }
+  }
+
+  function setSelectedVideoFile(file) {
+   if (!file || !file.type.startsWith('video/')) return alert("MP4/WebM 영상 파일만 선택할 수 있습니다.");
+   const dt = new DataTransfer();
+   dt.items.add(file);
+   const input = document.getElementById('videoUpload');
+   input.files = dt.files;
+   updateFileName(input);
+  }
+
+  function handleVideoDragOver(event) {
+   event.preventDefault();
+   document.getElementById('videoDropArea').classList.add('border-green-500', 'bg-green-50');
+  }
+
+  function handleVideoDragLeave(event) {
+   event.preventDefault();
+   document.getElementById('videoDropArea').classList.remove('border-green-500', 'bg-green-50');
+  }
+
+  function handleVideoDrop(event) {
+   event.preventDefault();
+   handleVideoDragLeave(event);
+   const file = event.dataTransfer.files && event.dataTransfer.files[0];
+   if (file) setSelectedVideoFile(file);
+  }
+
+  function handleVideoFolderSelect(input) {
+   const list = document.getElementById('folderVideoList');
+   const files = Array.from(input.files || []).filter(file => file.type.startsWith('video/') || /\.(mp4|webm)$/i.test(file.name));
+   if (files.length === 0) {
+    list.classList.add('hidden');
+    return alert("선택한 폴더에서 MP4/WebM 영상을 찾지 못했습니다.");
+   }
+
+   list.classList.remove('hidden');
+   list.innerHTML = files.map((file, index) => {
+    const sizeMb = (file.size / 1024 / 1024).toFixed(1);
+    const path = file.webkitRelativePath || file.name;
+    return `<button onclick="selectFolderVideo(${index})" class="w-full text-left bg-gray-50 hover:bg-blue-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold text-gray-700 transition">${path} <span class="text-gray-400">(${sizeMb}MB)</span></button>`;
+   }).join("");
+   window.folderVideoFiles = files;
+  }
+
+  function selectFolderVideo(index) {
+   const file = window.folderVideoFiles && window.folderVideoFiles[index];
+   if (file) setSelectedVideoFile(file);
+  }
+
+  window.cardNewsState = {
+   selectedSlot: 0,
+   videoUrl: "",
+   cards: Array.from({ length: 5 }, (_, index) => ({
+    image: "",
+    text: `${index + 1}페이지 카드뉴스 문구를 생성하거나 직접 입력하세요.`
+   }))
+  };
+
+  function setupCardVideoPreview(file) {
+   const studio = document.getElementById('cardNewsStudio');
+   const video = document.getElementById('cardVideoPreview');
+   if (!studio || !video || !file) return;
+   if (window.cardNewsState.videoUrl) URL.revokeObjectURL(window.cardNewsState.videoUrl);
+   window.cardNewsState.videoUrl = URL.createObjectURL(file);
+   video.src = window.cardNewsState.videoUrl;
+   studio.classList.remove('hidden');
+   renderCardPreviews();
+  }
+
+  function selectCardSlot(index) {
+   window.cardNewsState.selectedSlot = index;
+   document.querySelectorAll('.card-slot-btn').forEach((btn, btnIndex) => {
+    btn.className = btnIndex === index
+     ? "card-slot-btn bg-black text-white text-xs font-bold px-3 py-1.5 rounded-lg"
+     : "card-slot-btn bg-white text-gray-700 border border-gray-200 text-xs font-bold px-3 py-1.5 rounded-lg";
+   });
+  }
+
+  function captureCurrentFrameToCard() {
+   const video = document.getElementById('cardVideoPreview');
+   if (!video || !video.videoWidth) return alert("먼저 영상을 선택하고 미리보기에서 원하는 장면으로 이동해 주세요.");
+
+   const captureCanvas = document.createElement('canvas');
+   captureCanvas.width = video.videoWidth;
+   captureCanvas.height = video.videoHeight;
+   const ctx = captureCanvas.getContext('2d');
+   ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+   window.cardNewsState.cards[window.cardNewsState.selectedSlot].image = captureCanvas.toDataURL('image/jpeg', 0.92);
+   renderCardPreviews();
+  }
+
+  function escapeHtml(value) {
+   return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+  }
+
+  function extractCardNewsTexts(cardnewsContent) {
+   const lines = String(cardnewsContent || "")
+    .split('\n')
+    .map(line => line.replace(/^[-*\s]+/, '').trim())
+    .filter(Boolean);
+   const pageLines = [];
+   for (let i = 1; i <= 5; i++) {
+    const found = lines.find(line => line.includes(`${i}페이지`) || line.includes(`${i}장`) || line.startsWith(`${i}.`));
+    pageLines.push((found || lines[i - 1] || `${i}페이지 문구를 입력하세요.`).replace(/^(\d+페이지|\d+장|\d+\.)\s*[:：-]?\s*/,''));
+   }
+   return pageLines;
+  }
+
+  function applyCardNewsTexts(cardnewsContent) {
+   const texts = extractCardNewsTexts(cardnewsContent);
+   texts.forEach((text, index) => {
+    window.cardNewsState.cards[index].text = text;
+   });
+   document.getElementById('cardNewsStudio')?.classList.remove('hidden');
+   renderCardPreviews();
+  }
+
+  function updateCardText(index, value) {
+   window.cardNewsState.cards[index].text = value;
+   drawCardCanvas(index);
+  }
+
+  function renderCardPreviews() {
+   const grid = document.getElementById('cardPreviewGrid');
+   if (!grid) return;
+   grid.innerHTML = window.cardNewsState.cards.map((card, index) => `
+    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-3 space-y-3">
+     <div class="flex items-center justify-between">
+      <span class="text-xs font-extrabold text-gray-700">카드 ${index + 1}</span>
+      <button onclick="downloadCardJpg(${index})" class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">JPG</button>
+     </div>
+     <canvas id="cardCanvas${index}" width="1080" height="1350" class="w-full rounded-xl bg-gray-200 border border-gray-200"></canvas>
+     <textarea oninput="updateCardText(${index}, this.value)" rows="3" class="w-full text-xs font-semibold bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-black">${escapeHtml(card.text)}</textarea>
+    </div>
+   `).join("");
+   setTimeout(() => {
+    for (let i = 0; i < 5; i++) drawCardCanvas(i);
+   }, 0);
+  }
+
+  function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
+   const words = String(text || "").split(/\s+/);
+   let line = "";
+   for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+     ctx.fillText(line, x, y);
+     line = word;
+     y += lineHeight;
+    } else {
+     line = testLine;
+    }
+   }
+   if (line) ctx.fillText(line, x, y);
+  }
+
+  function drawCardCanvas(index) {
+   const canvas = document.getElementById(`cardCanvas${index}`);
+   if (!canvas) return;
+   const ctx = canvas.getContext('2d');
+   const card = window.cardNewsState.cards[index];
+   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+   const drawTextLayer = () => {
+    const gradient = ctx.createLinearGradient(0, canvas.height * 0.45, 0, canvas.height);
+    gradient.addColorStop(0, "rgba(0,0,0,0)");
+    gradient.addColorStop(1, "rgba(0,0,0,0.78)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.font = "800 62px Arial, sans-serif";
+    ctx.textBaseline = "top";
+    ctx.shadowColor = "rgba(0,0,0,0.35)";
+    ctx.shadowBlur = 12;
+    drawWrappedText(ctx, card.text, 72, 970, 936, 82);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "rgba(255,255,255,0.88)";
+    ctx.font = "700 28px Arial, sans-serif";
+    ctx.fillText(`CARD ${index + 1}`, 72, 72);
+   };
+
+   if (card.image) {
+    const img = new Image();
+    img.onload = () => {
+     const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+     const width = img.width * scale;
+     const height = img.height * scale;
+     ctx.drawImage(img, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+     drawTextLayer();
+    };
+    img.src = card.image;
+   } else {
+    const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    bg.addColorStop(0, "#111827");
+    bg.addColorStop(1, "#374151");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.font = "800 42px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("영상 장면을 캡처해 주세요", canvas.width / 2, 560);
+    ctx.textAlign = "left";
+    drawTextLayer();
+   }
+  }
+
+  function downloadCardJpg(index) {
+   drawCardCanvas(index);
+   setTimeout(() => {
+    const canvas = document.getElementById(`cardCanvas${index}`);
+    if (!canvas) return;
+    const productName = (document.getElementById('sourcingKeyword')?.innerText || "cardnews").replace(/[\\/:*?"<>|]/g, "").slice(0, 24);
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/jpeg', 0.92);
+    a.download = `${productName}_card_${index + 1}.jpg`;
+    a.click();
+   }, 100);
+  }
+
+  function downloadAllCardJpgs() {
+   for (let i = 0; i < 5; i++) {
+    setTimeout(() => downloadCardJpg(i), i * 250);
    }
   }
 
@@ -730,7 +1031,8 @@
        </div>
       </div>
      </div>
-    `;
+   `;
+    applyCardNewsTexts(cardnewsContent);
    }
 
    // 대본 3종 추가 (존재할 때만)
@@ -1029,7 +1331,15 @@
  2. [사용이 편리한 특징 또는 특장점 2]
  3. [구매 욕구를 부르는 소구점 또는 특장점 3]
 - 공통 CTA 가이드: [시청자에게 프로필 링크 방문이나 구매 클릭을 유도할 핵심 행동지침]
-- 중국소싱키워드: [이 상품을 타오바오나 1688에서 검색하여 직구/사입 도매 상품을 찾을 수 있는 중국어 최적 검색 단어 또는 결합어 딱 하나만 출력]
+- 상품검색키워드: [네이버쇼핑/쿠팡/구글이미지/샤오홍슈/더우인에서 같은 상품 또는 유사 레퍼런스를 찾기 좋은 한국어 상품 검색어 딱 하나]
+- 바이럴구조:
+ 1. 첫 3초 후킹: [시청자를 붙잡는 첫 장면/첫 문장 구조]
+ 2. 문제 제기: [소비자가 공감할 불편함을 어떻게 보여주는지]
+ 3. 해결 장면: [상품이 등장하며 문제를 해결하는 핵심 장면]
+ 4. 전환 포인트: [구매 욕구가 생기는 시연/비교/반전]
+ 5. CTA 방향: [한국 쇼핑쇼츠에서 어떤 구매 유도 문구가 어울리는지]
+- 상품진행점수: [0에서 100 사이 숫자]점
+- 진행판단: [진행 추천/보류/비추천 중 하나와 이유 한 줄]
 
 [태그_채널핏분석]
 - 인스타 릴스 적합도: [0에서 100 사이 숫자]%
@@ -1083,6 +1393,77 @@
   function triggerQuickTag(tagValue) {
    document.getElementById('trendKeyword').value = tagValue;
    discoverTrends();
+  }
+
+  const DEFAULT_QUICK_TAGS = [
+   { icon: "📦", label: "쿠팡꿀템" },
+   { icon: "🏠", label: "삶의질상승" },
+   { icon: "🛒", label: "다이소추천" },
+   { icon: "🍳", label: "주방꿀템" }
+  ];
+
+  function getQuickTags() {
+   try {
+    const saved = JSON.parse(safeStorage.getLocal('quickTags') || "null");
+    if (Array.isArray(saved) && saved.length > 0) return saved;
+   } catch (error) {}
+   return DEFAULT_QUICK_TAGS;
+  }
+
+  function saveQuickTags(tags) {
+   safeStorage.setLocal('quickTags', JSON.stringify(tags));
+  }
+
+  function renderQuickTags() {
+   const container = document.getElementById('quickTagsContainer');
+   if (!container) return;
+   const tags = getQuickTags();
+   container.innerHTML = tags.map(tag => `
+    <button onclick='triggerQuickTag(${JSON.stringify(tag.label)})' class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-3.5 py-2 rounded-full transition border border-gray-200">
+     ${escapeHtml(tag.icon || "🔎")} ${escapeHtml(tag.label)}
+    </button>
+   `).join("");
+   renderTagManagerList();
+  }
+
+  function toggleTagManager() {
+   const modal = document.getElementById('tagManagerModal');
+   modal.classList.toggle('hidden');
+   renderTagManagerList();
+  }
+
+  function renderTagManagerList() {
+   const list = document.getElementById('tagManagerList');
+   if (!list) return;
+   const tags = getQuickTags();
+   list.innerHTML = tags.map((tag, index) => `
+    <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+     <span class="w-10 text-center text-lg">${escapeHtml(tag.icon || "🔎")}</span>
+     <span class="flex-1 text-sm font-bold text-gray-800">${escapeHtml(tag.label)}</span>
+     <button onclick="deleteQuickTag(${index})" class="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg">삭제</button>
+    </div>
+   `).join("");
+  }
+
+  function addQuickTag() {
+   const iconInput = document.getElementById('newTagIcon');
+   const labelInput = document.getElementById('newTagLabel');
+   const icon = iconInput.value.trim() || "🔎";
+   const label = labelInput.value.trim();
+   if (!label) return alert("추가할 태그명을 입력해 주세요!");
+   const tags = getQuickTags();
+   tags.push({ icon, label });
+   saveQuickTags(tags);
+   iconInput.value = "";
+   labelInput.value = "";
+   renderQuickTags();
+  }
+
+  function deleteQuickTag(index) {
+   const tags = getQuickTags();
+   tags.splice(index, 1);
+   saveQuickTags(tags);
+   renderQuickTags();
   }
 
   // 🖥️ [수집/정렬/DOM 번역 하이브리드 엔진]
@@ -1515,11 +1896,11 @@
     [keyword_coupang]
     여기에 쿠팡/네이버 쇼핑몰 검색에 가장 유리한 한국어 키워드 3~5개를 컴마(,)로만 구분해서 한 줄로 나열해줘. (예: 스마트약통, 알약케이스, 영양제보관함)
      
-    [keyword_taobao]
-    여기에 타오바오/1688에서 해당 도매 상품을 쉽게 찾을 수 있는 중국어 검색어 3~5개를 컴마(,)로만 구분해서 한 줄로 나열해줘. (예: 便携药盒, 收纳盒, 药箱)
+    [keyword_china_reference]
+    여기에 샤오홍슈/더우인에서 같은 상품이나 사용 장면을 찾기 좋은 중국어 검색어 3~5개를 컴마(,)로만 구분해서 한 줄로 나열해줘. (예: 便携药盒, 收纳盒, 药箱)
      
     [keyword_english]
-    여기에 알리익스프레스/아마존/테무에서 검색할 수 있는 영어 키워드 3~5개를 컴마(,)로만 구분해서 한 줄로 나열해줘. (예: pill organizer, pill box, vitamin storage)
+    여기에 알리익스프레스와 구글 이미지에서 검색할 수 있는 영어 키워드 3~5개를 컴마(,)로만 구분해서 한 줄로 나열해줘. (예: pill organizer, pill box, vitamin storage)
      
     [selling_points]
     이 상품의 가장 강력한 마케팅 소구점 3가지를 정리해줘.
@@ -1549,18 +1930,18 @@
       return text.substring(start, end).trim();
      }
 
-     const tags = ["[detected_name]", "[keyword_coupang]", "[keyword_taobao]", "[keyword_english]", "[selling_points]", "[channel_fit]"];
+     const tags = ["[detected_name]", "[keyword_coupang]", "[keyword_china_reference]", "[keyword_english]", "[selling_points]", "[channel_fit]"];
       
      const name = extractSection(text, "[detected_name]", tags);
      const kwCoupang = extractSection(text, "[keyword_coupang]", tags);
-     const kwTaobao = extractSection(text, "[keyword_taobao]", tags);
+     const kwChinaReference = extractSection(text, "[keyword_china_reference]", tags);
      const kwEnglish = extractSection(text, "[keyword_english]", tags);
      const points = extractSection(text, "[selling_points]", tags);
      const channelFit = extractSection(text, "[channel_fit]", tags);
 
      document.getElementById('detectedProductName').innerText = name;
      document.getElementById('kwCoupang').innerText = kwCoupang;
-     document.getElementById('kwTaobao').innerText = kwTaobao;
+     document.getElementById('kwChinaReference').innerText = kwChinaReference;
      document.getElementById('kwEnglish').innerText = kwEnglish;
      document.getElementById('productSellingPoints').innerText = points;
      document.getElementById('imageChannelFit').innerText = channelFit;
@@ -1578,22 +1959,54 @@
    reader.readAsDataURL(file);
   }
 
-  // 🔒 [신설] 중국 소싱 다이렉트 검색용 헬퍼 함수
-  function searchTaobaoDirect(keyword) {
-   if(!keyword || keyword === "추출 중..." || keyword === "대기 중" || keyword === "식별 불가") return alert("소싱 키워드가 준비되지 않았습니다!");
-   const cleanKeyword = encodeURIComponent(keyword.split(',')[0].trim());
-   window.open(`https://s.taobao.com/search?q=${cleanKeyword}`, '_blank');
+  // 🔎 상품 레퍼런스 다이렉트 검색용 헬퍼 함수
+  function getCleanSearchKeyword(keyword) {
+   if(!keyword || keyword === "추출 중..." || keyword === "대기 중" || keyword === "식별 불가") {
+    alert("상품 검색 키워드가 준비되지 않았습니다!");
+    return "";
+   }
+   return keyword.split(',')[0].trim();
   }
-   
-  function search1688Direct(keyword) {
-   if(!keyword || keyword === "추출 중..." || keyword === "대기 중" || keyword === "식별 불가") return alert("소싱 키워드가 준비되지 않았습니다!");
-   const cleanKeyword = encodeURIComponent(keyword.split(',')[0].trim());
-   window.open(`https://s.1688.com/youyuan/index.htm?tab=image&imageAddress=&key=${cleanKeyword}`, '_blank');
+
+  function searchXhsReference(keyword) {
+   const cleanKeyword = getCleanSearchKeyword(keyword);
+   if (!cleanKeyword) return;
+   window.open(`https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(cleanKeyword)}`, '_blank');
+  }
+
+  function searchDouyinReference(keyword) {
+   const cleanKeyword = getCleanSearchKeyword(keyword);
+   if (!cleanKeyword) return;
+   window.open(`https://www.douyin.com/search/${encodeURIComponent(cleanKeyword)}`, '_blank');
+  }
+
+  function searchNaverShopping(keyword) {
+   const cleanKeyword = getCleanSearchKeyword(keyword);
+   if (!cleanKeyword) return;
+   window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(cleanKeyword)}`, '_blank');
+  }
+
+  function searchCoupang(keyword) {
+   const cleanKeyword = getCleanSearchKeyword(keyword);
+   if (!cleanKeyword) return;
+   window.open(`https://www.coupang.com/np/search?q=${encodeURIComponent(cleanKeyword)}`, '_blank');
+  }
+
+  function searchGoogleImages(keyword) {
+   const cleanKeyword = getCleanSearchKeyword(keyword);
+   if (!cleanKeyword) return;
+   window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(cleanKeyword)}`, '_blank');
+  }
+
+  function searchAliExpress(keyword) {
+   const cleanKeyword = getCleanSearchKeyword(keyword);
+   if (!cleanKeyword) return;
+   window.open(`https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(cleanKeyword)}`, '_blank');
   }
 
   // 🔒 [신설] 1단계 결과 파서 및 바인더
   function extractSourcingKeyword(text) {
-   const match = text.match(/중국소싱키워드\s*:\s*(.+)/);
+   const match = text.match(/상품검색키워드\s*:\s*(.+)/) || text.match(/중국소싱키워드\s*:\s*(.+)/);
    if (match) {
     return match[1].trim().replace(/[\[\]]/g, '');
    }
