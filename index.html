@@ -754,6 +754,59 @@
    renderCardPreviews();
   }
 
+  window.cardNewsVersions = [];
+
+  function parseCardNewsVersions(cardnewsContent) {
+   const content = String(cardnewsContent || "").trim();
+   if (!content) return [];
+
+   const headings = [
+    "문제해결형",
+    "불안감 조성형",
+    "비포애프터형"
+   ];
+   const pattern = new RegExp(`\\[(${headings.join("|")})\\]`, "g");
+   const matches = Array.from(content.matchAll(pattern));
+
+   if (matches.length === 0) {
+    return [{ label: "카드뉴스 대본", hint: "기본형", content }];
+   }
+
+   return matches.map((match, index) => {
+    const start = match.index + match[0].length;
+    const end = matches[index + 1] ? matches[index + 1].index : content.length;
+    const label = match[1];
+    const hints = {
+     "문제해결형": "불편함을 보여주고 해결 장면으로 설득",
+     "불안감 조성형": "놓치면 손해 보는 느낌으로 클릭 유도",
+     "비포애프터형": "사용 전후 차이를 직관적으로 강조"
+    };
+    return {
+     label,
+     hint: hints[label] || "카드뉴스 버전",
+     content: content.substring(start, end).trim()
+    };
+   }).filter(version => version.content);
+  }
+
+  function renderCardNewsVersionPreview(index) {
+   const preview = document.getElementById('cardnewsVersionPreview');
+   if (!preview || !window.cardNewsVersions[index]) return;
+   preview.textContent = window.cardNewsVersions[index].content;
+  }
+
+  function selectCardNewsVersion(index) {
+   const version = window.cardNewsVersions[index];
+   if (!version) return;
+   applyCardNewsTexts(version.content);
+   renderCardNewsVersionPreview(index);
+   document.querySelectorAll('.cardnews-version-btn').forEach((btn, btnIndex) => {
+    btn.className = btnIndex === index
+     ? "cardnews-version-btn bg-black text-white px-3.5 py-2 rounded-xl text-xs font-extrabold transition"
+     : "cardnews-version-btn bg-white text-gray-700 border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-extrabold hover:bg-gray-50 transition";
+   });
+  }
+
   function updateCardText(index, value) {
    window.cardNewsState.cards[index].text = value;
    drawCardCanvas(index);
@@ -1053,20 +1106,37 @@
       end = oIndex;
      }
     }
-    cardnewsContent = text.substring(start, end).trim();
+   cardnewsContent = text.substring(start, end).trim();
    }
 
    if (cardnewsContent) {
-    const cardnewsId = "copy_box_cardnews";
+    const cardnewsVersions = parseCardNewsVersions(cardnewsContent);
+    window.cardNewsVersions = cardnewsVersions;
     container.innerHTML += `
-     <div class="bg-gray-50 border border-gray-200 rounded-3xl p-6 flex flex-col space-y-3 shadow-sm hover:shadow transition duration-150">
-      <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-1">
-       <span class="text-sm font-extrabold text-gray-800">📸 인스타/틱톡 Before & After 가상 스테이징 대본 (5장 슬라이드)</span>
-       <button onclick="copySingleSection('${cardnewsId}', '카드뉴스')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-xs px-3.5 py-2 rounded-xl border border-emerald-200 transition">📋 복사</button>
+     <div class="bg-gray-50 border border-gray-200 rounded-3xl p-6 flex flex-col space-y-4 shadow-sm hover:shadow transition duration-150">
+      <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+       <div>
+        <span class="text-sm font-extrabold text-gray-800">📸 카드뉴스 대본</span>
+        <p class="text-[11px] text-gray-500 font-semibold mt-1">원하는 버전을 누르면 위 카드뉴스 보드 5장에 자동으로 들어갑니다.</p>
+       </div>
+       <button onclick="copySingleSection('cardnewsVersionPreview', '카드뉴스 대본')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-xs px-3.5 py-2 rounded-xl border border-emerald-200 transition">📋 현재 버전 복사</button>
       </div>
-      <pre id="${cardnewsId}" class="text-gray-800 text-xs whitespace-pre-wrap leading-relaxed font-sans font-semibold bg-white p-4 rounded-xl border border-gray-100 max-h-[250px] overflow-y-auto">${cardnewsContent}</pre>
+
+      <div class="flex flex-wrap gap-2">
+       ${cardnewsVersions.map((version, index) => `
+        <button onclick="selectCardNewsVersion(${index})" class="cardnews-version-btn ${index === 0 ? 'bg-black text-white' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'} px-3.5 py-2 rounded-xl text-xs font-extrabold transition">
+         ${escapeHtml(version.label)}
+        </button>
+       `).join("")}
+      </div>
+
+      <div class="bg-white border border-gray-100 rounded-2xl p-4">
+       <div id="cardnewsVersionHint" class="text-[11px] text-gray-400 font-bold mb-2">선택한 카드뉴스 대본 미리보기</div>
+       <pre id="cardnewsVersionPreview" class="text-gray-800 text-xs whitespace-pre-wrap leading-relaxed font-sans font-semibold max-h-[220px] overflow-y-auto">${escapeHtml(cardnewsVersions[0]?.content || cardnewsContent)}</pre>
+      </div>
      </div>
     `;
+    setTimeout(() => selectCardNewsVersion(0), 0);
    }
 
    // 고정댓글 카드 추가 (존재할 때만)
@@ -2175,14 +2245,30 @@ CTA: 프로필 링크 클릭해서 빠르게 확인하세요! (말투에 맞춰 
    }
 
    if (genCardnews) {
-    formatGuideline += `
+   formatGuideline += `
 [태그_카드뉴스]
-📸 인스타/틱톡 Before & After 가상 스테이징 대본 (5장 슬라이드용)
-- 1페이지 (Before): 결핍 자극 및 후킹 문구 (말투에 맞게)
-- 2페이지 (After): 해결/환상 유도 문구 (말투에 맞게)
-- 3페이지 (매력포인트 1): 제품 특장점 설명
-- 4페이지 (매력포인트 2): 제품 작동 방식/매력 설명
-- 5페이지 (CTA): 인포크링크 클릭 유도 문구 ("이 소품 정보는 프로필 링크에 있음!")
+아래 3가지 버전의 카드뉴스 대본을 모두 작성해줘. 각 버전은 반드시 5페이지로 구성하고, 페이지마다 한 줄 문구만 짧고 강하게 써줘.
+
+[문제해결형]
+1페이지 (문제): 시청자가 공감할 불편함/상황 후킹
+2페이지 (원인): 왜 계속 불편했는지 짚기
+3페이지 (해결): 상품이 해결하는 장면
+4페이지 (증거): 사용 후 달라지는 포인트
+5페이지 (CTA): 프로필 링크/상품 정보 클릭 유도
+
+[불안감 조성형]
+1페이지 (경고): 지금 방치하면 손해/불편이 커지는 후킹
+2페이지 (공감): 대부분이 모르고 지나치는 문제
+3페이지 (전환): 이 상품을 알면 달라지는 지점
+4페이지 (확신): 바로 써보고 싶게 만드는 장점
+5페이지 (CTA): 놓치기 전에 확인하라는 구매 유도
+
+[비포애프터형]
+1페이지 (Before): 쓰기 전 답답한 장면
+2페이지 (After): 쓰고 난 뒤 달라진 장면
+3페이지 (포인트1): 가장 눈에 띄는 장점
+4페이지 (포인트2): 반복해서 쓰게 되는 이유
+5페이지 (CTA): 상품 정보는 프로필 링크에 있다는 문구
 `;
    }
 
