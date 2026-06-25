@@ -55,7 +55,7 @@
    <div class="flex border-b border-gray-100 bg-gray-50">
     <button id="tab1Btn" onclick="switchTab(1)" class="flex-1 py-4 text-center font-bold border-b-2 border-black text-black transition">🔗 개별 링크 수동 분석</button>
     <button id="tab2Btn" onclick="switchTab(2)" class="flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition">🔥 실시간 트렌드 발굴기</button>
-    <button id="tab3Btn" onclick="switchTab(3)" class="flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition">📸 이미지로 상품 분석</button>
+    <button id="tab3Btn" onclick="switchTab(3)" class="flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition">🔎 제품 검색</button>
    </div>
 
    <!-- 탭 1 -->
@@ -273,16 +273,23 @@
     </div>
    </div>
 
-   <!-- 탭 3: 이미지 상품 분석기 -->
+   <!-- 탭 3: 제품 검색 -->
    <div id="tab3Content" class="hidden p-8 space-y-6">
     <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-xs text-blue-800 flex items-start gap-3">
      <span class="text-lg">💡</span>
      <div>
-      <strong class="font-bold">AI 이미지 상품 분석기 (100% 무료 Gemini API 활용)</strong><br>
-      제품 사진이나 쇼츠 캡처 이미지를 아래에 올리시면, AI가 상품 정보를 식별하고 쿠팡/네이버/샤오홍슈/더우인/알리에서 바로 검색하기 좋은 키워드를 뽑아줍니다.
+      <strong class="font-bold">AI 제품 검색 키워드 생성기 (100% 무료 Gemini API 활용)</strong><br>
+      제품명만 입력하거나 이미지를 올리면 쿠팡/네이버/샤오홍슈/더우인/알리 검색용 키워드를 뽑아줍니다.
      </div>
     </div>
 
+    <div class="bg-white border border-blue-100 rounded-2xl p-4 space-y-3">
+     <label class="block text-xs font-bold text-blue-700">이미지 없이 한국어 제품명으로 검색</label>
+     <div class="flex flex-col md:flex-row gap-2">
+      <input type="text" id="productTextQuery" onkeydown="if(event.key === 'Enter') runProductTextKeywordAnalysis()" placeholder="예: 소근육 발달 놀이 키트" class="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm font-semibold">
+      <button onclick="runProductTextKeywordAnalysis()" id="textKeywordBtn" class="bg-blue-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-md text-sm whitespace-nowrap">중국어 키워드 만들기</button>
+     </div>
+    </div>
     <div class="space-y-4">
      <label for="productImageUpload" class="file-drop-area w-full flex flex-col items-center justify-center px-4 py-8 rounded-2xl bg-white border border-gray-200">
       <span class="text-3xl mb-2">📸</span>
@@ -291,14 +298,14 @@
       <input type="file" id="productImageUpload" accept="image/*" class="hidden" onchange="updateImageFileName(this)">
      </label>
      <button id="analyzeImageBtn" onclick="runGeminiImageAnalysis()" class="w-full bg-blue-600 text-white px-5 py-3.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-md text-sm flex items-center justify-center gap-2">
-      <span>🪄 이미지 속 상품 분석하기</span>
+      <span>🪄 제품 검색 키워드 만들기</span>
      </button>
     </div>
 
     <!-- 이미지 분석 결과 출력창 -->
     <div id="imageAnalysisResultBox" class="hidden p-6 bg-white border border-blue-200 rounded-3xl shadow-lg space-y-6 fade-in">
      <div class="border-b border-gray-100 pb-3 flex items-center justify-between">
-      <span class="text-sm font-extrabold text-blue-600">📸 이미지 상품 분석 리포트</span>
+      <span class="text-sm font-extrabold text-blue-600">🔎 제품 검색 키워드 리포트</span>
       <span id="imageEngineBadge" class="text-[10px] bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold font-mono border border-blue-200"></span>
      </div>
       
@@ -359,7 +366,7 @@
    </div>
 
    <!-- 결과 및 터미널 -->
-   <div class="p-8 border-t border-gray-100 bg-gray-50 space-y-4 w-full"><!-- 5단 분리 복사기 -->
+   <div id="bottomResultPanel" class="p-8 border-t border-gray-100 bg-gray-50 space-y-4 w-full"><!-- 5단 분리 복사기 -->
     <div id="resultBox" class="hidden p-6 bg-white border border-emerald-200 rounded-3xl shadow-lg space-y-6 animate-fade-in">
      <div class="flex items-center justify-between border-b border-gray-100 pb-4">
       <div class="flex items-center gap-2">
@@ -549,6 +556,7 @@
    const content1 = document.getElementById('tab1Content');
    const content2 = document.getElementById('tab2Content');
    const content3 = document.getElementById('tab3Content');
+   const bottomPanel = document.getElementById('bottomResultPanel');
 
    // Reset all buttons and hide contents
    btn1.className = "flex-1 py-4 text-center font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-700 transition";
@@ -558,6 +566,7 @@
    content1.classList.add('hidden');
    content2.classList.add('hidden');
    content3.classList.add('hidden');
+   if (bottomPanel) bottomPanel.classList.toggle('hidden', tabNum !== 1);
 
    if (tabNum === 1) {
     btn1.className = "flex-1 py-4 text-center font-bold border-b-2 border-black text-black transition";
@@ -2000,19 +2009,88 @@
    }
   }
 
+
+  async function runProductTextKeywordAnalysis() {
+   const apiKey = safeStorage.getLocal('myGeminiKey');
+   if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
+   const query = document.getElementById('productTextQuery').value.trim();
+   if(!query) return alert("검색할 한국어 제품명을 입력해 주세요!");
+   const btn = document.getElementById('textKeywordBtn');
+   const resultBox = document.getElementById('imageAnalysisResultBox');
+   const imageEngineBadge = document.getElementById('imageEngineBadge');
+   const original = btn.innerHTML;
+   btn.innerHTML = "생성 중...";
+   btn.classList.add('opacity-80', 'cursor-not-allowed');
+   resultBox.classList.add('hidden');
+
+   const prompt = `너는 쇼핑 쇼츠 소싱용 검색 키워드 전문가야. 한국어 제품명 "${query}"를 보고 아래 형식만 출력해줘.
+[detected_name]
+한국어 제품명 정리
+[keyword_coupang]
+쿠팡/네이버 검색용 한국어 키워드 3~5개를 컴마로만 구분
+[keyword_china_reference]
+샤오홍슈/더우인 검색용 중국어 키워드 3~5개를 컴마로만 구분
+[keyword_english]
+알리익스프레스/이미지 검색용 영어 키워드 3~5개를 컴마로만 구분
+[selling_points]
+1. 핵심 소구점
+2. 핵심 소구점
+3. 핵심 소구점
+[channel_fit]
+인스타/틱톡 적합성과 연출 팁 3줄 이내`;
+
+   try {
+    const result = await tryGeminiTextOnly(apiKey, prompt);
+    fillProductKeywordResult(result.text, result.engine);
+   } catch (error) {
+    alert("🚨 에러: " + error.message);
+   } finally {
+    btn.innerHTML = original;
+    btn.classList.remove('opacity-80', 'cursor-not-allowed');
+   }
+  }
+
+  function fillProductKeywordResult(text, engine) {
+   function extractSection(text, tag, endTags) {
+    const index = text.indexOf(tag);
+    if (index === -1) return "추출 실패";
+    const start = index + tag.length;
+    let end = text.length;
+    for (const et of endTags) {
+     const eIdx = text.indexOf(et);
+     if (eIdx !== -1 && eIdx < end && eIdx > start) end = eIdx;
+    }
+    return text.substring(start, end).trim();
+   }
+   const tags = ["[detected_name]", "[keyword_coupang]", "[keyword_china_reference]", "[keyword_english]", "[selling_points]", "[channel_fit]"];
+   document.getElementById('detectedProductName').innerText = extractSection(text, "[detected_name]", tags);
+   document.getElementById('kwCoupang').innerText = extractSection(text, "[keyword_coupang]", tags);
+   document.getElementById('kwChinaReference').innerText = extractSection(text, "[keyword_china_reference]", tags);
+   document.getElementById('kwEnglish').innerText = extractSection(text, "[keyword_english]", tags);
+   document.getElementById('productSellingPoints').innerText = extractSection(text, "[selling_points]", tags);
+   document.getElementById('imageChannelFit').innerText = extractSection(text, "[channel_fit]", tags);
+   document.getElementById('imageEngineBadge').innerText = `엔진: ${engine}`;
+   document.getElementById('imageAnalysisResultBox').classList.remove('hidden');
+   document.getElementById('imageAnalysisResultBox').scrollIntoView({ behavior: 'smooth' });
+  }
+
   async function runGeminiImageAnalysis() {
    const apiKey = safeStorage.getLocal('myGeminiKey');
    if(!apiKey) return alert("⚙️ 설정창(톱니바퀴)을 눌러 제미니 API 키를 먼저 등록해 주세요!");
 
    const fileInput = document.getElementById('productImageUpload');
-   if(!fileInput.files || fileInput.files.length === 0) return alert("분석할 이미지를 먼저 선택해 주세요!");
+   if(!fileInput.files || fileInput.files.length === 0) {
+    const typedKeyword = document.getElementById('productTextQuery')?.value.trim();
+    if (typedKeyword) return runProductTextKeywordAnalysis();
+    return alert("이미지를 선택하거나 한국어 제품명을 입력해 주세요!");
+   }
 
    const file = fileInput.files[0];
    const btn = document.getElementById('analyzeImageBtn');
    const resultBox = document.getElementById('imageAnalysisResultBox');
    const imageEngineBadge = document.getElementById('imageEngineBadge');
 
-   btn.innerHTML = "<div class='spinner'></div> <span>이미지 속 상품 식별 및 키워드 추출 중...</span>";
+   btn.innerHTML = "<div class='spinner'></div> <span>제품 검색 키워드 생성 중...</span>";
    btn.classList.add('opacity-80', 'cursor-not-allowed');
    resultBox.classList.add('hidden');
 
@@ -2088,7 +2166,7 @@
     } catch (error) {
      alert("🚨 에러: " + error.message);
     } finally {
-     btn.innerHTML = "<span>🪄 이미지 속 상품 분석하기</span>";
+     btn.innerHTML = "<span>🪄 제품 검색 키워드 만들기</span>";
      btn.classList.remove('opacity-80', 'cursor-not-allowed');
     }
    };
@@ -2537,5 +2615,7 @@ ${finalFormat}`;
  </script>
 </body>
 </html>
+
+
 
 
