@@ -328,6 +328,7 @@
     <div class="space-y-4">
      <label for="productImageUpload" class="file-drop-area w-full flex flex-col items-center justify-center px-4 py-8 rounded-2xl bg-white border border-gray-200">
       <span class="text-3xl mb-2">📸</span>
+      <img id="productImagePreview" alt="Selected product preview" class="hidden w-full max-w-xs aspect-square object-contain rounded-2xl border border-blue-100 bg-gray-50 mb-3">
       <span id="imgNameDisplay" class="text-sm text-gray-500 font-medium">여기를 클릭하거나 분석할 상품 이미지를 끌어다 놓으세요</span>
       <input type="file" id="productImageUpload" accept="image/*" class="hidden" onchange="updateImageFileName(this)">
      </label>
@@ -511,6 +512,41 @@
    }
    return defaultValue;
   }
+
+  function normalizeMediaUrl(value, fallback = "") {
+   if (Array.isArray(value)) {
+    for (const item of value) {
+     const resolved = normalizeMediaUrl(item, "");
+     if (resolved) return resolved;
+    }
+    return fallback;
+   }
+
+   if (value && typeof value === 'object') {
+    const preferredKeys = [
+     'url_size_large', 'urlSizeLarge', 'url_size_1080', 'urlSize1080',
+     'url_default', 'urlDefault', 'url_pre', 'urlPre', 'url',
+     'thumbnail', 'cover', 'image', 'src'
+    ];
+    for (const key of preferredKeys) {
+     const resolved = normalizeMediaUrl(value[key], "");
+     if (resolved) return resolved;
+    }
+    for (const key in value) {
+     const resolved = normalizeMediaUrl(value[key], "");
+     if (resolved) return resolved;
+    }
+    return fallback;
+   }
+
+   if (typeof value !== 'string') return fallback;
+   let url = value.trim().replace(/\u002F/g, '/').replace(/\//g, '/');
+   if (!url) return fallback;
+   if (url.startsWith('//')) url = 'https:' + url;
+   if (url.startsWith('http://')) url = 'https://' + url.slice(7);
+   return /^https?:///i.test(url) ? url : fallback;
+  }
+
 
   function sanitizeFilename(name) {
    return name.replace(/[\/:*?"<>|]/g, '').trim().substring(0, 15);
@@ -1743,18 +1779,38 @@
      } else {
       const noteObj = item.note || item || {};
 
-      const coverUrl = resolveField(noteObj, [
+      const rawCoverUrl = resolveField(noteObj, [
        ['cover', 'url_size_large'],
+       ['cover', 'urlSizeLarge'],
+       ['cover', 'url_size_1080'],
+       ['cover', 'url_default'],
+       ['cover', 'url_pre'],
        ['cover', 'url'],
+       ['image_list', 0],
+       ['image_list', 0, 'url_size_large'],
+       ['image_list', 0, 'url_default'],
+       ['image_list', 0, 'url_pre'],
+       ['image_list', 0, 'url'],
+       ['images_list', 0],
        ['images_list', 0, 'url_size_large'],
+       ['images_list', 0, 'url_default'],
+       ['images_list', 0, 'url_pre'],
        ['images_list', 0, 'url'],
+       ['imagesList', 0],
        ['imagesList', 0, 'urlSizeLarge'],
+       ['imagesList', 0, 'urlDefault'],
+       ['imagesList', 0, 'urlPre'],
        ['imagesList', 0, 'url'],
+       ['video_info_v2', 'image'],
        ['video_info_v2', 'image', 'thumbnail'],
+       ['videoInfoV2', 'image'],
        ['videoInfoV2', 'image', 'thumbnail'],
        ['cover_url'],
-       ['image']
-      ], "https://images.unsplash.com/photo-1542291026-7eec264c27ff");
+       ['coverUrl'],
+       ['image'],
+       ['thumbnail']
+      ], "");
+      const coverUrl = normalizeMediaUrl(rawCoverUrl, "https://images.unsplash.com/photo-1542291026-7eec264c27ff");
 
       const playUrl = resolveField(noteObj, [
        ['video_info_v2', 'media', 'stream', 'h264', 0, 'master_url'],
@@ -1799,13 +1855,17 @@
        ['author_name']
       ], "xhs_creator");
 
-      const authorAvatar = resolveField(noteObj, [
+      const rawAuthorAvatar = resolveField(noteObj, [
        ['user', 'avatar'],
        ['user', 'images'],
        ['user', 'avatar_url'],
+       ['user', 'avatarUrl'],
        ['author', 'avatar'],
+       ['author', 'avatar_url'],
+       ['author', 'avatarUrl'],
        ['avatar']
-      ], "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde");
+      ], "");
+      const authorAvatar = normalizeMediaUrl(rawAuthorAvatar, "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde");
 
       const titleText = resolveField(noteObj, [
        ['title'],
@@ -1836,13 +1896,13 @@
      card.innerHTML = `
       <a href="${v.url}" target="_blank" class="flex gap-4 text-decoration-none color-inherit cursor-pointer hover:opacity-90">
        <div class="relative w-24 h-32 bg-black rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 shadow-sm">
-        <img src="${v.cover}" class="w-full h-full object-cover" alt="Video cover">
+        <img src="${v.cover}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="Video cover" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1542291026-7eec264c27ff';">
         <span class="absolute bottom-1 right-1 text-[11px] bg-black/60 text-white px-2 py-0.5 rounded font-bold">👀 ${v.views || v.likes}</span>
        </div>
        <div class="flex-1 min-w-0 flex flex-col justify-between">
         <div>
          <div class="flex items-center gap-2 mb-1">
-          <img src="${v.avatar}" class="w-4 h-4 rounded-full border border-gray-200" alt="Avatar">
+          <img src="${v.avatar}" referrerpolicy="no-referrer" class="w-4 h-4 rounded-full border border-gray-200" alt="Avatar" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde';">
           <span class="text-xs font-bold text-gray-600 truncate">${v.author}</span>
          </div>
          <p class="text-sm font-extrabold text-gray-900 line-clamp-3 leading-snug mb-1 hover:text-blue-600">${v.title}</p>
@@ -1927,10 +1987,20 @@
 
   function updateImageFileName(input) {
    const display = document.getElementById('imgNameDisplay');
+   const preview = document.getElementById('productImagePreview');
    if(input.files && input.files[0]) {
-    display.innerHTML = `<span class='text-blue-600 font-bold'>선택됨: ${input.files[0].name}</span>`;
+    const file = input.files[0];
+    display.innerHTML = `<span class='text-blue-600 font-bold'>선택됨: ${file.name}</span>`;
+    if (preview) {
+     preview.src = URL.createObjectURL(file);
+     preview.classList.remove('hidden');
+    }
    } else {
     display.innerText = "여기를 클릭하거나 분석할 상품 이미지를 끌어다 놓으세요";
+    if (preview) {
+     preview.removeAttribute('src');
+     preview.classList.add('hidden');
+    }
    }
   }
 
@@ -2041,37 +2111,42 @@
   function searchXhsReference(keyword) {
    const cleanKeyword = getCleanSearchKeyword(keyword);
    if (!cleanKeyword) return;
-   window.open(`https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(cleanKeyword)}`, '_blank');
+   openReusableSearchWindow(`https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(cleanKeyword)}`, 'globalShortsXhsSearch');
   }
 
   function searchDouyinReference(keyword) {
    const cleanKeyword = getCleanSearchKeyword(keyword);
    if (!cleanKeyword) return;
-   window.open(`https://www.douyin.com/search/${encodeURIComponent(cleanKeyword)}`, '_blank');
+   openReusableSearchWindow(`https://www.douyin.com/search/${encodeURIComponent(cleanKeyword)}`, 'globalShortsDouyinSearch');
   }
 
   function searchNaverShopping(keyword) {
    const cleanKeyword = getCleanSearchKeyword(keyword);
    if (!cleanKeyword) return;
-   window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(cleanKeyword)}`, '_blank');
+   openReusableSearchWindow(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(cleanKeyword)}`, 'globalShortsNaverSearch');
   }
 
   function searchCoupang(keyword) {
    const cleanKeyword = getCleanSearchKeyword(keyword);
    if (!cleanKeyword) return;
-   window.open(`https://www.coupang.com/np/search?q=${encodeURIComponent(cleanKeyword)}`, '_blank');
+   openReusableSearchWindow(`https://www.coupang.com/np/search?q=${encodeURIComponent(cleanKeyword)}`, 'globalShortsCoupangSearch');
   }
 
   function searchGoogleImages(keyword) {
    const cleanKeyword = getCleanSearchKeyword(keyword);
    if (!cleanKeyword) return;
-   window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(cleanKeyword)}`, '_blank');
+   openReusableSearchWindow(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(cleanKeyword)}`, 'globalShortsGoogleImageSearch');
   }
 
   function searchAliExpress(keyword) {
    const cleanKeyword = getCleanSearchKeyword(keyword);
    if (!cleanKeyword) return;
-   window.open(`https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(cleanKeyword)}`, '_blank');
+   openReusableSearchWindow(`https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(cleanKeyword)}`, 'globalShortsAliSearch');
+  }
+
+  function openReusableSearchWindow(url, targetName) {
+   const searchWindow = window.open(url, targetName);
+   if (searchWindow) searchWindow.focus();
   }
 
   // 🔒 [신설] 1단계 결과 파서 및 바인더
@@ -2466,3 +2541,4 @@ ${finalFormat}`;
  </script>
 </body>
 </html>
+
