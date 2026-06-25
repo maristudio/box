@@ -61,7 +61,10 @@
    <!-- 탭 1 -->
    <div id="tab1Content" class="p-8 space-y-6">
     <div class="flex gap-4">
-     <input type="text" id="videoLink" placeholder="틱톡 또는 샤오홍슈의 주소를 붙여넣으세요" class="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black transition text-sm">
+     <div class="relative flex-1">
+      <input type="text" id="videoLink" placeholder="틱톡 또는 샤오홍슈의 주소를 붙여넣으세요" class="w-full px-4 py-3 pr-11 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black transition text-sm">
+      <button onclick="clearVideoLink()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-800 text-lg font-bold leading-none" title="주소 지우기">×</button>
+     </div>
      <button onclick="startWorkflow()" class="bg-black text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition shadow-md whitespace-nowrap">영상 불러오기</button>
     </div>
 
@@ -610,6 +613,12 @@
     }
    }
    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  function clearVideoLink() {
+   const input = document.getElementById('videoLink');
+   input.value = "";
+   input.focus();
   }
    
   function toggleSettings() { document.getElementById('settingsModal').classList.toggle('hidden'); }
