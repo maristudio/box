@@ -134,11 +134,21 @@
           <input id="shoppingCover" type="range" min="0" max="35" step="1" value="18" oninput="updateShoppingCropLabel()" class="w-full accent-red-500">
          </label>
         </div>
-        <div id="shoppingCropPad" onpointerdown="startShoppingCropDrag(event)" onpointermove="moveShoppingCropDrag(event)" onpointerup="endShoppingCropDrag(event)" onpointercancel="endShoppingCropDrag(event)" class="relative h-40 rounded-xl border border-gray-200 overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-orange-50 cursor-grab select-none touch-none">
-         <div class="absolute inset-x-0 bottom-0 h-1/4 bg-red-200/40 border-t border-red-300/70"></div>
-         <div class="absolute inset-6 bottom-12 border-2 border-dashed border-emerald-500/30 rounded-lg"></div>
-         <div id="shoppingCropHandle" class="absolute w-7 h-7 rounded-full bg-emerald-600 border-4 border-white shadow-lg -translate-x-1/2 -translate-y-1/2" style="left:50%;top:30%;"></div>
-         <div class="absolute left-3 right-3 bottom-3 text-center text-[11px] font-extrabold text-red-700">중국어가 보이면 점을 위쪽으로 이동</div>
+        <div id="shoppingPreviewWrap" class="hidden bg-gray-950 rounded-xl p-3">
+         <div class="flex items-center justify-between gap-2 mb-2">
+          <div id="shoppingPreviewTitle" class="text-[11px] font-extrabold text-white truncate">미리보기</div>
+          <button type="button" onclick="toggleShoppingPreviewPlay()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg px-2 py-1 text-[11px] font-extrabold">재생/정지</button>
+         </div>
+         <div id="shoppingCropPad" onpointerdown="startShoppingCropDrag(event)" onpointermove="moveShoppingCropDrag(event)" onpointerup="endShoppingCropDrag(event)" onpointercancel="endShoppingCropDrag(event)" class="relative mx-auto aspect-[9/16] max-h-[520px] w-full max-w-[300px] rounded-xl overflow-hidden bg-black cursor-grab select-none touch-none border border-white/10">
+          <video id="shoppingPreviewVideo" class="absolute inset-0 h-full w-full object-cover" playsinline muted loop controls></video>
+          <div id="shoppingCoverMask" class="absolute inset-x-0 bottom-0 bg-red-500/35 border-t border-red-300/80 pointer-events-none"></div>
+          <div class="absolute inset-3 border-2 border-dashed border-emerald-300/60 rounded-lg pointer-events-none"></div>
+          <div id="shoppingCropHandle" class="absolute w-7 h-7 rounded-full bg-emerald-500 border-4 border-white shadow-lg -translate-x-1/2 -translate-y-1/2 pointer-events-none" style="left:50%;top:30%;"></div>
+          <div class="absolute left-2 right-2 bottom-2 bg-black/55 text-center text-[10px] font-extrabold text-white rounded-lg py-1 pointer-events-none">영상을 드래그해서 중국어가 안 보이게 맞추세요</div>
+         </div>
+        </div>
+        <div id="shoppingEmptyPreview" class="h-40 rounded-xl border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center text-xs font-extrabold text-gray-400">
+         영상을 넣으면 여기에 바로 보입니다
         </div>
         <div id="shoppingCropLabel" class="text-[11px] font-bold text-gray-500">확대 1.12x / 하단 가림 18%</div>
         <textarea id="shoppingScript" rows="4" placeholder="쇼핑쇼츠 대본을 붙여넣거나 대본 가져오기를 누르세요" class="w-full p-3 text-xs font-bold bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black"></textarea>
@@ -730,6 +740,8 @@
 
   window.shoppingShortsState = {
    files: [],
+   selectedIndex: 0,
+   previewUrl: "",
    cropX: 0.5,
    cropY: 0.3,
    dragging: false
@@ -759,9 +771,10 @@
    const videos = files.filter(file => file.type.startsWith('video/') || /\.(mp4|webm)$/i.test(file.name));
    if (!videos.length) return alert("MP4/WebM 영상 파일을 1개 이상 넣어 주세요.");
    window.shoppingShortsState.files = videos;
+   window.shoppingShortsState.selectedIndex = 0;
    document.getElementById('shoppingDropText').textContent = `${videos.length}개 영상 선택됨`;
    renderShoppingVideoList();
-   if (videos[0]) setSelectedVideoFile(videos[0]);
+   if (videos[0]) selectShoppingPreview(0);
   }
 
   function renderShoppingVideoList() {
@@ -774,8 +787,8 @@
    list.innerHTML = files.map((file, index) => {
     const sizeMb = (file.size / 1024 / 1024).toFixed(1);
     return `
-     <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2">
-      <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-black">${index + 1}</div>
+     <div class="flex items-center gap-2 bg-white border ${index === window.shoppingShortsState.selectedIndex ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-gray-200'} rounded-xl px-3 py-2">
+      <div class="w-6 h-6 rounded-full ${index === window.shoppingShortsState.selectedIndex ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700'} flex items-center justify-center text-xs font-black">${index + 1}</div>
       <button onclick="selectShoppingPreview(${index})" class="flex-1 text-left text-xs font-bold text-gray-700 truncate">${file.name} <span class="text-gray-400">(${sizeMb}MB)</span></button>
       <button onclick="moveShoppingVideo(${index}, -1)" ${index === 0 ? "disabled" : ""} class="px-2 py-1 rounded-lg border border-gray-200 text-xs font-black disabled:opacity-30">↑</button>
       <button onclick="moveShoppingVideo(${index}, 1)" ${index === files.length - 1 ? "disabled" : ""} class="px-2 py-1 rounded-lg border border-gray-200 text-xs font-black disabled:opacity-30">↓</button>
@@ -788,12 +801,33 @@
    const nextIndex = index + direction;
    if (nextIndex < 0 || nextIndex >= files.length) return;
    [files[index], files[nextIndex]] = [files[nextIndex], files[index]];
+   if (window.shoppingShortsState.selectedIndex === index) window.shoppingShortsState.selectedIndex = nextIndex;
+   else if (window.shoppingShortsState.selectedIndex === nextIndex) window.shoppingShortsState.selectedIndex = index;
    renderShoppingVideoList();
   }
 
   function selectShoppingPreview(index) {
    const file = window.shoppingShortsState.files[index];
-   if (file) setSelectedVideoFile(file);
+   if (!file) return;
+   window.shoppingShortsState.selectedIndex = index;
+   setSelectedVideoFile(file);
+   const video = document.getElementById('shoppingPreviewVideo');
+   if (window.shoppingShortsState.previewUrl) URL.revokeObjectURL(window.shoppingShortsState.previewUrl);
+   window.shoppingShortsState.previewUrl = URL.createObjectURL(file);
+   video.src = window.shoppingShortsState.previewUrl;
+   video.load();
+   document.getElementById('shoppingPreviewTitle').textContent = `${index + 1}. ${file.name}`;
+   document.getElementById('shoppingPreviewWrap').classList.remove('hidden');
+   document.getElementById('shoppingEmptyPreview').classList.add('hidden');
+   renderShoppingVideoList();
+   updateShoppingCropLabel();
+  }
+
+  function toggleShoppingPreviewPlay() {
+   const video = document.getElementById('shoppingPreviewVideo');
+   if (!video || !video.src) return;
+   if (video.paused) video.play().catch(() => {});
+   else video.pause();
   }
 
   function applyShoppingPreset(mode) {
@@ -817,6 +851,16 @@
    if (handle) {
     handle.style.left = `${window.shoppingShortsState.cropX * 100}%`;
     handle.style.top = `${window.shoppingShortsState.cropY * 100}%`;
+   }
+   const mask = document.getElementById('shoppingCoverMask');
+   if (mask) mask.style.height = `${cover}%`;
+   const video = document.getElementById('shoppingPreviewVideo');
+   if (video) {
+    const x = window.shoppingShortsState.cropX * 100;
+    const y = window.shoppingShortsState.cropY * 100;
+    video.style.transform = `scale(${zoom})`;
+    video.style.transformOrigin = `${x}% ${y}%`;
+    video.style.objectPosition = `${x}% ${y}%`;
    }
    document.getElementById('shoppingCropLabel').textContent = `확대 ${zoom.toFixed(2)}x / 하단 가림 ${cover}%`;
   }
